@@ -9,6 +9,7 @@ import KnowledgePage from './pages/Knowledge';
 import LoginPage from './pages/Login';
 import NotFoundPage from './pages/NotFound';
 import RegisterPage from './pages/Register';
+import WhatsAppConnectPage from './pages/WhatsAppConnect';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="conversations" element={<ConversationsPage />} />
           <Route path="knowledge" element={<KnowledgePage />} />
+          <Route path="whatsapp-connect" element={<WhatsAppConnectPage />} />
         </Route>
       </Route>
 

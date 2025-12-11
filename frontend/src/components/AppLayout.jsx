@@ -5,6 +5,7 @@ const navItems = [
   { to: '/', label: 'لوحة التحكم' },
   { to: '/conversations', label: 'المحادثات' },
   { to: '/knowledge', label: 'قاعدة المعرفة' },
+  { to: '/whatsapp-connect', label: 'ربط واتساب' },
 ];
 
 function AppLayout() {
