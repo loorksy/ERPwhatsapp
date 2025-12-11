@@ -6,9 +6,32 @@ import { loadFromStorage, persistToStorage } from '../utils/storage';
 
 const AuthContext = createContext();
 
+const AUTH_USER_KEY = 'auth_user';
+const AUTH_TOKEN_KEY = 'auth_token';
+
+const parseStoredValue = (storageKey, persistent) =>
+  loadFromStorage(storageKey, { persistent, fallback: false });
+
+const getInitialAuth = () => {
+  const localToken = parseStoredValue(AUTH_TOKEN_KEY, true);
+  const sessionToken = parseStoredValue(AUTH_TOKEN_KEY, false);
+  const persistent = Boolean(localToken) || (!localToken && !sessionToken);
+  const token = localToken ?? sessionToken ?? null;
+  const userFromPrimary = parseStoredValue(AUTH_USER_KEY, persistent);
+  const userFallback = parseStoredValue(AUTH_USER_KEY, !persistent);
+
+  return {
+    token,
+    user: userFromPrimary ?? userFallback ?? null,
+    remember: persistent,
+  };
+};
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => loadFromStorage('auth_user'));
-  const [token, setToken] = useState(() => loadFromStorage('auth_token'));
+  const { token: initialToken, user: initialUser, remember: initialRemember } = getInitialAuth();
+  const [remember, setRemember] = useState(initialRemember);
+  const [user, setUser] = useState(initialUser);
+  const [token, setToken] = useState(initialToken);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -17,22 +40,25 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
-  const handleAuthSuccess = (payload) => {
+  const handleAuthSuccess = (payload, options = {}) => {
+    const { persistent = true } = options;
     const { user: userPayload, token: accessToken } = payload || {};
     if (!accessToken) return;
 
-    persistToStorage('auth_user', userPayload || {});
-    persistToStorage('auth_token', accessToken);
+    persistToStorage(AUTH_USER_KEY, userPayload || {}, { persistent });
+    persistToStorage(AUTH_TOKEN_KEY, accessToken, { persistent });
     setUser(userPayload || {});
     setToken(accessToken);
+    setRemember(persistent);
     setAuthToken(accessToken);
   };
 
   const login = async (credentials) => {
+    const { rememberMe = true, ...payload } = credentials || {};
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/login', credentials);
-      handleAuthSuccess(data);
+      const { data } = await api.post('/auth/login', payload);
+      handleAuthSuccess(data, { persistent: rememberMe });
       return data;
     } catch (error) {
       throw new Error(parseApiError(error));
@@ -42,10 +68,11 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (payload) => {
+    const { rememberMe = true, ...body } = payload || {};
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/register', payload);
-      handleAuthSuccess(data);
+      const { data } = await api.post('/auth/register', body);
+      handleAuthSuccess(data, { persistent: rememberMe });
       return data;
     } catch (error) {
       throw new Error(parseApiError(error));
@@ -63,8 +90,8 @@ export function AuthProvider({ children }) {
       setUser(null);
       setToken(null);
       setAuthToken(null);
-      persistToStorage('auth_user', null);
-      persistToStorage('auth_token', null);
+      persistToStorage(AUTH_USER_KEY, null);
+      persistToStorage(AUTH_TOKEN_KEY, null);
     }
   };
 
@@ -72,14 +99,16 @@ export function AuthProvider({ children }) {
     () => ({
       user,
       token,
+      remember,
       loading,
       isAuthenticated: Boolean(token),
       login,
       logout,
       register,
       setUser,
+      setRemember,
     }),
-    [user, token, loading],
+    [user, token, remember, loading],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

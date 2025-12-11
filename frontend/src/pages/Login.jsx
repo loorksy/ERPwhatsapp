@@ -1,65 +1,95 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
 import { friendlyError } from '../utils/error';
 
 function LoginPage() {
   const navigate = useNavigate();
   const { login, loading } = useAuth();
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [error, setError] = useState(null);
+  const [serverError, setServerError] = useState(null);
 
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    mode: 'onBlur',
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: true,
+    },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
+  const onSubmit = async (values) => {
+    setServerError(null);
     try {
-      await login(form);
+      await login(values);
       navigate('/');
     } catch (err) {
-      setError(friendlyError(err));
+      setServerError(friendlyError(err));
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-[420px] rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-indigo-50 px-4 py-10">
+      <div className="w-full max-w-[440px] rounded-2xl border border-slate-200 bg-white p-8 shadow-lg md:p-10">
         <p className="text-sm font-semibold text-indigo-600">ERP WhatsApp</p>
         <h1 className="mt-2 text-2xl font-bold text-slate-900">تسجيل الدخول</h1>
         <p className="mt-1 text-sm text-slate-600">سجل الدخول لإدارة حسابك والمحادثات.</p>
 
-        {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {serverError && (
+          <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{serverError}</p>
+        )}
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
           <div>
             <label className="block text-sm font-medium text-slate-700">البريد الإلكتروني</label>
             <input
               type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none"
-              required
+              {...register('email', {
+                required: 'البريد الإلكتروني مطلوب',
+                pattern: {
+                  value: /[^\s@]+@[^\s@]+\.[^\s@]+/,
+                  message: 'صيغة البريد الإلكتروني غير صحيحة',
+                },
+              })}
             />
+            {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">كلمة المرور</label>
             <input
               type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none"
-              required
+              {...register('password', {
+                required: 'كلمة المرور مطلوبة',
+                minLength: { value: 8, message: 'الحد الأدنى 8 أحرف' },
+              })}
             />
+            {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
           </div>
+
+          <div className="flex items-center justify-between text-sm text-slate-700">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                {...register('rememberMe')}
+              />
+              <span>تذكرني</span>
+            </label>
+            <Link to="/forgot-password" className="font-semibold text-indigo-600 hover:text-indigo-500">
+              نسيت كلمة المرور؟
+            </Link>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-300"
+            className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-300"
           >
             {loading ? '...جاري التحقق' : 'تسجيل الدخول'}
           </button>
