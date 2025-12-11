@@ -10,6 +10,7 @@ const navItems = [
   { to: '/ai-settings', label: 'إعدادات AI' },
   { to: '/quick-replies', label: 'الردود السريعة' },
   { to: '/analytics', label: 'الإحصائيات' },
+  { to: '/reports', label: 'التقارير' },
   { to: '/advanced-settings', label: 'الإعدادات المتقدمة' },
   { to: '/settings', label: 'الإعدادات' },
 ];
