@@ -1,1 +1,85 @@
-# ERPwhatsapp
+# ERP WhatsApp Automation
+
+مشروع متكامل (Backend + Frontend) لنظام رد آلي ذكي على WhatsApp باستخدام Node.js و React.
+
+## المميزات
+- تكامل مع WhatsApp عبر مكتبة `whatsapp-web.js`.
+- خادم Express مع PostgreSQL و Redis كعناصر أساسية للتخزين والمهام.
+- واجهة React + TailwindCSS لمراقبة الحالة وإرسال رسائل تجريبية.
+- هيكل منظم وقابل للتوسع لإضافة الذكاء الاصطناعي والخدمات الخارجية.
+
+## المتطلبات المسبقة
+- Node.js 18+
+- PostgreSQL
+- Redis
+- متصفح Chromium/Chrome للسماح بتوليد رمز الـ QR في `whatsapp-web.js`.
+
+## الإعداد السريع
+1. انسخ ملف المتغيرات البيئية:
+   ```bash
+   cp .env.example .env
+   ```
+2. ثبّت الحزم وشغّل الـ Backend:
+   ```bash
+   cd backend
+   npm install
+   npm run dev
+   ```
+   سيتولد رمز QR في الطرفية لربط حساب WhatsApp.
+3. ثبّت الحزم وشغّل الـ Frontend في جلسة أخرى:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+4. افتح المتصفح على: http://localhost:5173
+
+## هيكل المجلدات
+```
+.
+├── backend
+│   ├── package.json
+│   └── src
+│       ├── app.js
+│       ├── config
+│       │   ├── database.js
+│       │   ├── env.js
+│       │   └── redis.js
+│       ├── controllers
+│       │   ├── health.controller.js
+│       │   └── message.controller.js
+│       ├── index.js
+│       ├── routes
+│       │   └── index.js
+│       ├── services
+│       │   ├── message.service.js
+│       │   └── whatsapp.service.js
+│       └── utils
+│           └── logger.js
+├── frontend
+│   ├── index.html
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── src
+│   │   ├── App.jsx
+│   │   ├── components
+│   │   │   └── StatusCard.jsx
+│   │   ├── index.css
+│   │   ├── main.jsx
+│   │   └── services
+│   │       └── api.js
+│   ├── tailwind.config.js
+│   └── vite.config.js
+└── .env.example
+```
+
+## ملاحظات التطوير
+- أضف قواعد linter/formatter (مثل ESLint و Prettier) لتطبيق معايير الكود.
+- حدّث منطق `message.service.js` لتخزين الرسائل وتشغيل تدفقات الذكاء الاصطناعي.
+- استخدم طبقة خدمات أو Workers مع Redis للتعامل مع الحمل المرتفع ومعالجة الرسائل.
+- استبدل الـ logger الحالي بحل إنتاجي مثل `pino` أو `winston` مع ربطه بمزود مراقبة.
+
+## الأمان
+- خزّن مفاتيح الاعتماد في متغيرات البيئة فقط.
+- فعّل HTTPS عند النشر، وقم بتقييد صلاحيات قواعد البيانات و Redis.
+- عند الربط مع WhatsApp، حافظ على مسار الجلسة في مكان آمن ومحمّي بالصلاحيات.
