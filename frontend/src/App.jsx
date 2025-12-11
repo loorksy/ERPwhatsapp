@@ -4,7 +4,7 @@ import GuestRoute from './components/GuestRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConversationsPage from './pages/Conversations';
 import ForgotPasswordPage from './pages/ForgotPassword';
-import KnowledgePage from './pages/Knowledge';
+import KnowledgeBasePage from './pages/KnowledgeBase';
 import LoginPage from './pages/Login';
 import NotFoundPage from './pages/NotFound';
 import RegisterPage from './pages/Register';
@@ -26,7 +26,7 @@ function App() {
           <Route path="overview" element={<OverviewPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="conversations" element={<ConversationsPage />} />
-          <Route path="knowledge" element={<KnowledgePage />} />
+          <Route path="knowledge" element={<KnowledgeBasePage />} />
           <Route path="ai-settings" element={<AISettingsPage />} />
           <Route path="quick-replies" element={<QuickRepliesPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
