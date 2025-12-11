@@ -1,0 +1,27 @@
+const path = require('path');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
+const env = {
+  nodeEnv: process.env.NODE_ENV || 'development',
+  port: Number(process.env.PORT) || 4000,
+  databaseUrl: process.env.DATABASE_URL || '',
+  redisUrl: process.env.REDIS_URL || '',
+  clientUrl: process.env.CLIENT_URL || '*',
+  sessionSecret: process.env.SESSION_SECRET || 'change-me',
+  jwtSecret: process.env.JWT_SECRET || 'change-me',
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1h',
+  resetTokenExpiresMinutes: Number(process.env.RESET_TOKEN_EXPIRES_MINUTES) || 60,
+  operatingHoursStart: process.env.OPERATING_HOURS_START || '',
+  operatingHoursEnd: process.env.OPERATING_HOURS_END || '',
+  whatsappSessionPath:
+    process.env.WHATSAPP_SESSION_PATH || path.join(process.cwd(), '.whatsapp-session'),
+  whatsappHeadless: process.env.WHATSAPP_HEADLESS !== 'false',
+  defaultAIProvider: process.env.DEFAULT_AI_PROVIDER || 'openai',
+  openaiApiKey: process.env.OPENAI_API_KEY,
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+  geminiApiKey: process.env.GEMINI_API_KEY,
+};
+
+module.exports = env;
