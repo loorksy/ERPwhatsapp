@@ -22,6 +22,9 @@ const env = {
   openaiApiKey: process.env.OPENAI_API_KEY,
   anthropicApiKey: process.env.ANTHROPIC_API_KEY,
   geminiApiKey: process.env.GEMINI_API_KEY,
+  embeddingModel: process.env.EMBEDDING_MODEL || 'text-embedding-3-small',
+  knowledgeUploadDir: process.env.KNOWLEDGE_UPLOAD_DIR || path.join(process.cwd(), 'uploads'),
+  maxUploadSizeMb: Number(process.env.MAX_UPLOAD_SIZE_MB) || 10,
 };
 
 module.exports = env;

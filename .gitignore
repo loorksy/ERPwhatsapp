@@ -6,5 +6,7 @@ pnpm-debug.log*
 .DS_Store
 .env
 .whatsapp-session
+uploads/
+backend/uploads/
 backend/dist
 frontend/dist

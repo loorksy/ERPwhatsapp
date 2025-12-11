@@ -74,8 +74,32 @@ CREATE TABLE IF NOT EXISTS knowledge_base (
   category TEXT,
   question TEXT NOT NULL,
   answer TEXT NOT NULL,
+  embedding double precision[],
+  source TEXT,
+  source_name TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT knowledge_base_question_unique UNIQUE (user_id, question)
+);
+
+CREATE TRIGGER set_knowledge_base_updated_at
+BEFORE UPDATE ON knowledge_base
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS knowledge_documents (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  knowledge_id BIGINT REFERENCES knowledge_base(id) ON DELETE SET NULL,
+  filename TEXT NOT NULL,
+  mime_type TEXT,
+  file_size BIGINT,
+  storage_path TEXT,
+  text_content TEXT,
+  embedding double precision[],
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS ai_settings (
@@ -113,6 +137,9 @@ CREATE INDEX IF NOT EXISTS idx_conversations_priority ON conversations(priority)
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_timestamp ON messages(conversation_id, "timestamp" DESC);
 CREATE INDEX IF NOT EXISTS idx_messages_is_from_bot ON messages(is_from_bot);
 CREATE INDEX IF NOT EXISTS idx_knowledge_base_user_category ON knowledge_base(user_id, category);
+CREATE INDEX IF NOT EXISTS idx_knowledge_base_updated_at ON knowledge_base(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_knowledge_documents_user_id ON knowledge_documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_documents_knowledge_id ON knowledge_documents(knowledge_id);
 CREATE INDEX IF NOT EXISTS idx_ai_settings_user_id ON ai_settings(user_id);
 CREATE INDEX IF NOT EXISTS idx_quick_replies_user_category ON quick_replies(user_id, category);
 

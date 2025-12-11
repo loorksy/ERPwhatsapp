@@ -8,6 +8,7 @@
 - نظام مصادقة JWT مع تسجيل/دخول/خروج واستعادة كلمة المرور باستخدام رموز آمنة.
 - واجهة React + TailwindCSS لمراقبة الحالة وإرسال رسائل تجريبية.
 - طبقة ذكاء اصطناعي متعددة المزودين (OpenAI، Anthropic Claude، Google Gemini) قابلة للتوسعة.
+- نظام قاعدة معرفة ببحث نصي ودلالي مع رفع مستندات PDF/DOCX/TXT وتوليد Embeddings.
 - هيكل منظم وقابل للتوسع لإضافة الذكاء الاصطناعي والخدمات الخارجية.
 
 ## المتطلبات المسبقة
@@ -57,6 +58,7 @@
 │       ├── controllers
 │       │   ├── auth.controller.js
 │       │   ├── ai.controller.js
+│       │   ├── knowledge.controller.js
 │       │   ├── health.controller.js
 │       │   ├── message.controller.js
 │       │   └── whatsapp.controller.js
@@ -66,11 +68,13 @@
 │       ├── routes
 │       │   ├── auth.routes.js
 │       │   ├── ai.routes.js
+│       │   ├── knowledge.routes.js
 │       │   ├── index.js
 │       │   └── whatsapp.routes.js
 │       ├── services
 │       │   ├── message.service.js
 │       │   ├── ai.service.js
+│       │   ├── knowledge.service.js
 │       │   └── whatsapp.service.js
 │       └── utils
 │           └── logger.js
@@ -108,6 +112,9 @@
 ### المتغيرات البيئية الخاصة بالذكاء الاصطناعي
 - `DEFAULT_AI_PROVIDER` المزود الافتراضي (القيم المدعومة: `openai`, `claude`, `gemini`).
 - `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` مفاتيح الوصول للمزودين.
+- `EMBEDDING_MODEL` نموذج التضمين المستخدم في البحث الدلالي (افتراضي: `text-embedding-3-small`).
+- `KNOWLEDGE_UPLOAD_DIR` مسار تخزين الملفات المرفوعة (افتراضي: `./uploads`).
+- `MAX_UPLOAD_SIZE_MB` الحد الأقصى لحجم الملف (ميغابايت، افتراضي 10).
 
 ## تكامل WhatsApp (Multi-Device)
 - استخدم Socket.io للانضمام إلى غرفة المستخدم (`user:{userId}`) والاستماع لحدث `whatsapp:qr` للحصول على QR بشكل فوري.
@@ -130,6 +137,19 @@
   - `POST /:id/notes` — إضافة ملاحظة داخلية (تسجل كرسالة `system`).
   - `POST /:id/transfer` — نقل للمشغل البشري وتسجيل ملاحظة تحويل.
   - المتغيرات البيئية الاختيارية لأوقات العمل: `OPERATING_HOURS_START` و`OPERATING_HOURS_END` بصيغة `HH:MM`.
+
+## قاعدة المعرفة والبحث الدلالي
+- إضافة وتعديل وحذف عناصر قاعدة المعرفة مع توليد Embeddings لكل سؤال/إجابة.
+- رفع ملفات PDF/DOCX/TXT لاستخراج النص وتجزئته ودمجه تلقائيًا في قاعدة المعرفة.
+- بحث نصي أو دلالي (Cosine Similarity) مع ترتيب النتائج وإرجاع السياق الأكثر صلة.
+- نقاط النهاية المحمية (JWT) تحت `/api/knowledge`:
+  - `GET /` — جلب قائمة المعارف مع Pagination وفلاتر `category`, `search`.
+  - `POST /` — إنشاء معلومة جديدة (`question`, `answer`, اختياري: `category`).
+  - `GET /:id` — جلب معلومة واحدة.
+  - `PUT /:id` — تحديث سؤال/إجابة/تصنيف.
+  - `DELETE /:id` — حذف معلومة.
+  - `POST /upload` — رفع ملف (`file`) واستخراج النص وتجزئته تلقائيًا لعناصر قاعدة المعرفة.
+  - `POST /search` — بحث نصي/دلالي (خيارات: `query`, `category`, `limit`, `semantic`).
 
 ## المصادقة (API)
 توجد جميع مسارات المصادقة تحت `/api/auth`:
