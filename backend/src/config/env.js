@@ -18,6 +18,10 @@ const env = {
   whatsappSessionPath:
     process.env.WHATSAPP_SESSION_PATH || path.join(process.cwd(), '.whatsapp-session'),
   whatsappHeadless: process.env.WHATSAPP_HEADLESS !== 'false',
+  defaultAIProvider: process.env.DEFAULT_AI_PROVIDER || 'openai',
+  openaiApiKey: process.env.OPENAI_API_KEY,
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+  geminiApiKey: process.env.GEMINI_API_KEY,
 };
 
 module.exports = env;

@@ -7,6 +7,7 @@
 - خادم Express مع PostgreSQL و Redis كعناصر أساسية للتخزين والمهام.
 - نظام مصادقة JWT مع تسجيل/دخول/خروج واستعادة كلمة المرور باستخدام رموز آمنة.
 - واجهة React + TailwindCSS لمراقبة الحالة وإرسال رسائل تجريبية.
+- طبقة ذكاء اصطناعي متعددة المزودين (OpenAI، Anthropic Claude، Google Gemini) قابلة للتوسعة.
 - هيكل منظم وقابل للتوسع لإضافة الذكاء الاصطناعي والخدمات الخارجية.
 
 ## المتطلبات المسبقة
@@ -55,6 +56,7 @@
 │       │   └── redis.js
 │       ├── controllers
 │       │   ├── auth.controller.js
+│       │   ├── ai.controller.js
 │       │   ├── health.controller.js
 │       │   ├── message.controller.js
 │       │   └── whatsapp.controller.js
@@ -63,10 +65,12 @@
 │       │   └── auth.middleware.js
 │       ├── routes
 │       │   ├── auth.routes.js
+│       │   ├── ai.routes.js
 │       │   ├── index.js
 │       │   └── whatsapp.routes.js
 │       ├── services
 │       │   ├── message.service.js
+│       │   ├── ai.service.js
 │       │   └── whatsapp.service.js
 │       └── utils
 │           └── logger.js
@@ -90,6 +94,20 @@
 ## ملاحظات التطوير
 - أضف قواعد linter/formatter (مثل ESLint و Prettier) لتطبيق معايير الكود.
 - حدّث منطق `message.service.js` لتخزين الرسائل وتشغيل تدفقات الذكاء الاصطناعي.
+
+## الذكاء الاصطناعي متعدد المزودين
+- تم تغليف مزودي OpenAI وAnthropic Claude وGoogle Gemini في طبقة خدمات قابلة للتوسعة مع آلية إعادة المحاولة.
+- الحقول المدعومة للإعدادات: `provider`, `model`, `temperature`, `maxTokens`, `systemPrompt`, `settings` (JSON عام للمفاتيح/الخيارات الخاصة).
+- نقاط النهاية (محميّة بـ JWT تحت `/api/ai`):
+  - `GET /settings` — جلب إعدادات مزود معين أو جميع المزودين.
+  - `PUT /settings` — حفظ/تحديث إعدادات مزود (مع دعم تخزين المفتاح في `settings_json`).
+  - `POST /test` — اختبار الاتصال بالمزود وإرجاع رد تجريبي.
+  - `GET /providers` — قائمة المزودين المتاحين والنماذج الافتراضية.
+  - `POST /switch` — تعيين المزود الافتراضي للمستخدم (يضبط حقل `is_default` داخل `settings_json`).
+
+### المتغيرات البيئية الخاصة بالذكاء الاصطناعي
+- `DEFAULT_AI_PROVIDER` المزود الافتراضي (القيم المدعومة: `openai`, `claude`, `gemini`).
+- `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` مفاتيح الوصول للمزودين.
 
 ## تكامل WhatsApp (Multi-Device)
 - استخدم Socket.io للانضمام إلى غرفة المستخدم (`user:{userId}`) والاستماع لحدث `whatsapp:qr` للحصول على QR بشكل فوري.
