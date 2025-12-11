@@ -56,13 +56,15 @@
 │       ├── controllers
 │       │   ├── auth.controller.js
 │       │   ├── health.controller.js
-│       │   └── message.controller.js
+│       │   ├── message.controller.js
+│       │   └── whatsapp.controller.js
 │       ├── index.js
 │       ├── middleware
 │       │   └── auth.middleware.js
 │       ├── routes
 │       │   ├── auth.routes.js
-│       │   └── index.js
+│       │   ├── index.js
+│       │   └── whatsapp.routes.js
 │       ├── services
 │       │   ├── message.service.js
 │       │   └── whatsapp.service.js
@@ -88,6 +90,16 @@
 ## ملاحظات التطوير
 - أضف قواعد linter/formatter (مثل ESLint و Prettier) لتطبيق معايير الكود.
 - حدّث منطق `message.service.js` لتخزين الرسائل وتشغيل تدفقات الذكاء الاصطناعي.
+
+## تكامل WhatsApp (Multi-Device)
+- استخدم Socket.io للانضمام إلى غرفة المستخدم (`user:{userId}`) والاستماع لحدث `whatsapp:qr` للحصول على QR بشكل فوري.
+- نقاط النهاية المحمية (JWT):
+  - `POST /api/whatsapp/connect`: بدء تهيئة العميل وإطلاق حدث QR.
+  - `GET /api/whatsapp/qr`: جلب أحدث QR (base64 + النص).
+  - `POST /api/whatsapp/disconnect`: قطع الاتصال وإيقاف العميل.
+  - `GET /api/whatsapp/status`: حالة الاتصال ورقم الجهاز إن وُجد.
+  - `POST /api/messages/send`: إرسال رسالة بعد تمرير `phone` و`message` (يتطلب اتصال WhatsApp جاهزًا).
+- مسار جلسة WhatsApp يدار عبر `LocalAuth` مع دعم الأجهزة المتعددة وتتم مزامنته مع جدول `whatsapp_sessions`.
 - استخدم طبقة خدمات أو Workers مع Redis للتعامل مع الحمل المرتفع ومعالجة الرسائل.
 - استبدل الـ logger الحالي بحل إنتاجي مثل `pino` أو `winston` مع ربطه بمزود مراقبة.
 

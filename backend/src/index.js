@@ -1,3 +1,5 @@
+const http = require('http');
+const { Server } = require('socket.io');
 const app = require('./app');
 const env = require('./config/env');
 const pool = require('./config/db');
@@ -19,10 +21,30 @@ async function bootstrap() {
     } else {
       logger.warn('REDIS_URL not set. Queue and cache features are disabled.');
     }
+    const server = http.createServer(app);
+    const io = new Server(server, {
+      cors: {
+        origin: env.clientUrl || '*',
+        methods: ['GET', 'POST'],
+      },
+    });
 
-    await whatsappService.initialize();
+    io.on('connection', (socket) => {
+      logger.info(`[socket] client connected ${socket.id}`);
+      socket.on('join', ({ userId }) => {
+        if (userId) {
+          socket.join(`user:${userId}`);
+        }
+      });
 
-    app.listen(env.port, () => {
+      socket.on('disconnect', (reason) => {
+        logger.info(`[socket] client disconnected (${reason}) ${socket.id}`);
+      });
+    });
+
+    whatsappService.attachSocket(io);
+
+    server.listen(env.port, () => {
       logger.info(`🚀 API server ready on port ${env.port}`);
     });
   } catch (error) {
