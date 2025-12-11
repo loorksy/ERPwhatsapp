@@ -15,6 +15,7 @@ import AISettingsPage from './pages/AISettings';
 import QuickRepliesPage from './pages/QuickReplies';
 import AnalyticsPage from './pages/Analytics';
 import SettingsPage from './pages/Settings';
+import AdvancedSettingsPage from './pages/AdvancedSettings';
 import { Navigate } from 'react-router-dom';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
           <Route path="quick-replies" element={<QuickRepliesPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="advanced-settings" element={<AdvancedSettingsPage />} />
           <Route path="whatsapp-connect" element={<WhatsAppConnectPage />} />
         </Route>
       </Route>
