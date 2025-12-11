@@ -3,22 +3,34 @@ import AppLayout from './components/AppLayout';
 import GuestRoute from './components/GuestRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConversationsPage from './pages/Conversations';
-import DashboardPage from './pages/Dashboard';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import KnowledgePage from './pages/Knowledge';
 import LoginPage from './pages/Login';
 import NotFoundPage from './pages/NotFound';
 import RegisterPage from './pages/Register';
 import WhatsAppConnectPage from './pages/WhatsAppConnect';
+import DashboardPage from './pages/Dashboard';
+import OverviewPage from './pages/Overview';
+import AISettingsPage from './pages/AISettings';
+import QuickRepliesPage from './pages/QuickReplies';
+import AnalyticsPage from './pages/Analytics';
+import SettingsPage from './pages/Settings';
+import { Navigate } from 'react-router-dom';
 
 function App() {
   return (
     <Routes>
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route index element={<DashboardPage />} />
+          <Route index element={<Navigate to="/overview" replace />} />
+          <Route path="overview" element={<OverviewPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
           <Route path="conversations" element={<ConversationsPage />} />
           <Route path="knowledge" element={<KnowledgePage />} />
+          <Route path="ai-settings" element={<AISettingsPage />} />
+          <Route path="quick-replies" element={<QuickRepliesPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="whatsapp-connect" element={<WhatsAppConnectPage />} />
         </Route>
       </Route>
