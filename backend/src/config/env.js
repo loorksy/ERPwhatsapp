@@ -13,6 +13,8 @@ const env = {
   jwtSecret: process.env.JWT_SECRET || 'change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1h',
   resetTokenExpiresMinutes: Number(process.env.RESET_TOKEN_EXPIRES_MINUTES) || 60,
+  operatingHoursStart: process.env.OPERATING_HOURS_START || '',
+  operatingHoursEnd: process.env.OPERATING_HOURS_END || '',
   whatsappSessionPath:
     process.env.WHATSAPP_SESSION_PATH || path.join(process.cwd(), '.whatsapp-session'),
   whatsappHeadless: process.env.WHATSAPP_HEADLESS !== 'false',

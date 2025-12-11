@@ -3,6 +3,7 @@ const QRCode = require('qrcode');
 const pool = require('../config/db');
 const env = require('../config/env');
 const logger = require('../utils/logger');
+const messageHandler = require('../handlers/message.handler');
 
 class WhatsAppService {
   constructor() {
@@ -124,7 +125,7 @@ class WhatsAppService {
 
   async receiveMessage(userId, message) {
     logger.info(`[whatsapp][user:${userId}] Incoming message from ${message.from}`);
-    // TODO: Persist inbound messages and hand off to NLP/automation pipeline.
+    await messageHandler.processIncomingMessage(userId, message);
   }
 
   async saveSession(userId, sessionData = {}, phoneNumber = null, isConnected = false) {
