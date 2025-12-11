@@ -6,7 +6,7 @@
 - تكامل مع WhatsApp عبر مكتبة `whatsapp-web.js`.
 - خادم Express مع PostgreSQL و Redis كعناصر أساسية للتخزين والمهام.
 - نظام مصادقة JWT مع تسجيل/دخول/خروج واستعادة كلمة المرور باستخدام رموز آمنة.
-- واجهة React + TailwindCSS لمراقبة الحالة وإرسال رسائل تجريبية.
+- واجهة React + TailwindCSS مع React Router وسياق مصادقة لإدارة الجلسات وإرسال الرسائل التجريبية.
 - طبقة ذكاء اصطناعي متعددة المزودين (OpenAI، Anthropic Claude، Google Gemini) قابلة للتوسعة.
 - نظام قاعدة معرفة ببحث نصي ودلالي مع رفع مستندات PDF/DOCX/TXT وتوليد Embeddings.
 - هيكل منظم وقابل للتوسع لإضافة الذكاء الاصطناعي والخدمات الخارجية.
@@ -83,13 +83,28 @@
 │   ├── package.json
 │   ├── postcss.config.js
 │   ├── src
-│   │   ├── App.jsx
+│   │   ├── App.jsx (Routes + Protected/Guest guards)
 │   │   ├── components
+│   │   │   ├── AppLayout.jsx
+│   │   │   ├── GuestRoute.jsx
+│   │   │   ├── ProtectedRoute.jsx
 │   │   │   └── StatusCard.jsx
+│   │   ├── context
+│   │   │   └── AuthContext.js
 │   │   ├── index.css
-│   │   ├── main.jsx
-│   │   └── services
-│   │       └── api.js
+│   │   ├── main.jsx (BrowserRouter + AuthProvider)
+│   │   ├── pages
+│   │   │   ├── Conversations.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Knowledge.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── NotFound.jsx
+│   │   │   └── Register.jsx
+│   │   ├── services
+│   │   │   └── api.service.js
+│   │   └── utils
+│   │       ├── error.js
+│   │       └── storage.js
 │   ├── tailwind.config.js
 │   └── vite.config.js
 └── .env.example
