@@ -1,16 +1,21 @@
 import PropTypes from 'prop-types';
 import { useMemo } from 'react';
+import ConversationFilters from './ConversationFilters';
 
 const statusLabels = {
+  open: 'نشط',
   active: 'نشط',
   pending: 'معلق',
   closed: 'مغلق',
+  archived: 'مؤرشف',
 };
 
 const statusColors = {
+  open: 'bg-emerald-100 text-emerald-700',
   active: 'bg-emerald-100 text-emerald-700',
   pending: 'bg-amber-100 text-amber-700',
   closed: 'bg-slate-200 text-slate-700',
+  archived: 'bg-slate-200 text-slate-700',
 };
 
 const formatTime = (timestamp) => {
@@ -26,52 +31,19 @@ function ConversationList({
   hasMore,
   onSelect,
   onLoadMore,
-  search,
-  onSearch,
-  status,
-  onStatusChange,
+  filters,
+  onFiltersChange,
+  resultCount,
 }) {
-  const statusOptions = useMemo(
-    () => [
-      { value: '', label: 'الكل' },
-      { value: 'active', label: 'نشط' },
-      { value: 'pending', label: 'معلق' },
-      { value: 'closed', label: 'مغلق' },
-    ],
-    [],
-  );
+  const summaryText = useMemo(() => {
+    if (!resultCount) return 'لا توجد نتائج.';
+    return `${resultCount} نتيجة`;
+  }, [resultCount]);
 
   return (
     <div className="flex h-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="space-y-3 border-b border-slate-200 p-4">
-        <div className="flex gap-2">
-          <input
-            type="search"
-            placeholder="ابحث بالاسم أو الرقم"
-            value={search}
-            onChange={(e) => onSearch(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:outline-none"
-          />
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-slate-600">الحالة:</span>
-          <div className="flex gap-2">
-            {statusOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => onStatusChange(option.value)}
-                className={`rounded-full border px-3 py-1 text-xs font-semibold transition hover:border-indigo-200 hover:text-indigo-700 ${
-                  status === option.value
-                    ? 'border-indigo-200 bg-indigo-50 text-indigo-700'
-                    : 'border-slate-200 text-slate-700'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <ConversationFilters filters={filters} onChange={onFiltersChange} resultCount={resultCount} />
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -120,6 +92,7 @@ function ConversationList({
       </div>
 
       <div className="border-t border-slate-200 p-3">
+        <div className="mb-2 text-xs text-slate-500">{summaryText}</div>
         <button
           type="button"
           disabled={loading || !hasMore}
@@ -140,16 +113,16 @@ ConversationList.propTypes = {
   hasMore: PropTypes.bool,
   onSelect: PropTypes.func.isRequired,
   onLoadMore: PropTypes.func.isRequired,
-  search: PropTypes.string.isRequired,
-  onSearch: PropTypes.func.isRequired,
-  status: PropTypes.string.isRequired,
-  onStatusChange: PropTypes.func.isRequired,
+  filters: PropTypes.object.isRequired,
+  onFiltersChange: PropTypes.func.isRequired,
+  resultCount: PropTypes.number,
 };
 
 ConversationList.defaultProps = {
   activeId: null,
   loading: false,
   hasMore: false,
+  resultCount: 0,
 };
 
 export default ConversationList;

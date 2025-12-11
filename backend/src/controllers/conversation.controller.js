@@ -4,26 +4,62 @@ const logger = require('../utils/logger');
 const { saveMessageToDB } = require('../handlers/message.handler');
 
 const buildFilters = (userId, query) => {
-  const clauses = ['user_id = $1'];
+  const clauses = ['c.user_id = $1'];
   const values = [userId];
   let idx = values.length;
 
   if (query.status) {
     idx += 1;
-    clauses.push(`status = $${idx}`);
+    clauses.push(`c.status = $${idx}`);
     values.push(query.status);
   }
 
-  if (query.priority) {
+  if (typeof query.priority !== 'undefined') {
     idx += 1;
-    clauses.push(`priority = $${idx}`);
+    clauses.push(`c.priority = $${idx}`);
     values.push(Number(query.priority));
   }
 
-  if (query.search) {
+  if (query.startDate) {
     idx += 1;
-    clauses.push(`(contact_phone ILIKE $${idx} OR contact_name ILIKE $${idx})`);
-    values.push(`%${query.search}%`);
+    clauses.push(`c.created_at >= $${idx}`);
+    values.push(new Date(query.startDate));
+  }
+
+  if (query.endDate) {
+    idx += 1;
+    clauses.push(`c.created_at <= $${idx}`);
+    values.push(new Date(query.endDate));
+  }
+
+  if (query.search) {
+    const term = `%${query.search}%`;
+    const scope = query.searchScope || 'all';
+    const clausesForScope = [];
+
+    if (scope === 'phone' || scope === 'all') {
+      idx += 1;
+      clausesForScope.push(`c.contact_phone ILIKE $${idx}`);
+      values.push(term);
+    }
+
+    if (scope === 'name' || scope === 'all') {
+      idx += 1;
+      clausesForScope.push(`c.contact_name ILIKE $${idx}`);
+      values.push(term);
+    }
+
+    if (scope === 'messages' || scope === 'all') {
+      idx += 1;
+      clausesForScope.push(
+        `EXISTS (SELECT 1 FROM messages m WHERE m.conversation_id = c.id AND (m.message_text ILIKE $${idx}))`,
+      );
+      values.push(term);
+    }
+
+    if (clausesForScope.length) {
+      clauses.push(`(${clausesForScope.join(' OR ')})`);
+    }
   }
 
   return { clauses, values };
@@ -37,20 +73,22 @@ const getAllConversations = async (req, res) => {
   const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
   const pageSize = Number(req.query.pageSize) > 0 ? Math.min(Number(req.query.pageSize), 100) : 20;
   const offset = (page - 1) * pageSize;
-  const sort = req.query.sort === 'oldest' ? 'created_at ASC' : 'created_at DESC';
+  let sort = 'c.created_at DESC';
+  if (req.query.sort === 'oldest') sort = 'c.created_at ASC';
+  if (req.query.sort === 'active') sort = 'c.updated_at DESC';
 
   const { clauses, values } = buildFilters(userId, req.query);
   const whereClause = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
 
   const listQuery = `
-    SELECT *
-    FROM conversations
+    SELECT c.*
+    FROM conversations c
     ${whereClause}
     ORDER BY ${sort}
     LIMIT ${pageSize} OFFSET ${offset};
   `;
 
-  const countQuery = `SELECT COUNT(*) FROM conversations ${whereClause};`;
+  const countQuery = `SELECT COUNT(*) FROM conversations c ${whereClause};`;
 
   const client = await pool.connect();
   try {

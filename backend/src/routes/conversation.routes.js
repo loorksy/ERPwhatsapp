@@ -14,7 +14,10 @@ router.get(
     query('status').optional().isIn(['open', 'pending', 'closed', 'archived']),
     query('priority').optional().isInt({ min: 0, max: 5 }),
     query('search').optional().isString().trim(),
-    query('sort').optional().isIn(['latest', 'oldest']),
+    query('searchScope').optional().isIn(['all', 'name', 'phone', 'messages']),
+    query('startDate').optional().isISO8601(),
+    query('endDate').optional().isISO8601(),
+    query('sort').optional().isIn(['latest', 'oldest', 'active']),
   ],
   conversationController.getAllConversations
 );

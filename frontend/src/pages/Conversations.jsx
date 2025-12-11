@@ -16,24 +16,83 @@ function ConversationsPage() {
   const [sending, setSending] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [filters, setFilters] = useState({
+    search: '',
+    searchScope: 'all',
+    status: '',
+    priority: '',
+    dateRange: 'all',
+    startDate: '',
+    endDate: '',
+    sort: 'latest',
+  });
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState(null);
   const socketRef = useRef(null);
 
   const activeId = selectedConversation?.id || null;
 
+  const resolveDateRange = () => {
+    const now = new Date();
+    const startOfDay = (date) => {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return d.toISOString();
+    };
+    const endOfDay = (date) => {
+      const d = new Date(date);
+      d.setHours(23, 59, 59, 999);
+      return d.toISOString();
+    };
+
+    switch (filters.dateRange) {
+      case 'today':
+        return { startDate: startOfDay(now), endDate: endOfDay(now) };
+      case 'yesterday': {
+        const y = new Date(now);
+        y.setDate(now.getDate() - 1);
+        return { startDate: startOfDay(y), endDate: endOfDay(y) };
+      }
+      case 'last7': {
+        const lastWeek = new Date(now);
+        lastWeek.setDate(now.getDate() - 6);
+        return { startDate: startOfDay(lastWeek), endDate: endOfDay(now) };
+      }
+      case 'custom':
+        return {
+          startDate: filters.startDate ? startOfDay(filters.startDate) : undefined,
+          endDate: filters.endDate ? endOfDay(filters.endDate) : undefined,
+        };
+      default:
+        return { startDate: undefined, endDate: undefined };
+    }
+  };
+
+  const priorityMap = { high: 3, medium: 2, low: 1 };
+
   const fetchConversations = async (nextPage = 1, append = false) => {
     setLoadingList(true);
     setError(null);
     try {
+      const { startDate, endDate } = resolveDateRange();
       const { data } = await api.get('/conversations', {
-        params: { page: nextPage, pageSize: 15, search: search || undefined, status: status || undefined },
+        params: {
+          page: nextPage,
+          pageSize: 15,
+          search: filters.search || undefined,
+          searchScope: filters.searchScope,
+          status: filters.status || undefined,
+          priority: filters.priority ? priorityMap[filters.priority] : undefined,
+          startDate,
+          endDate,
+          sort: filters.sort,
+        },
       });
       const newItems = data?.data || [];
       setHasMore((nextPage * (data?.pageSize || 15)) < (data?.total || 0));
       setConversations((prev) => (append ? [...prev, ...newItems] : newItems));
       setPage(nextPage);
+      setTotal(Number(data?.total || 0));
     } catch (err) {
       setError(parseApiError(err));
     } finally {
@@ -96,7 +155,7 @@ function ConversationsPage() {
   useEffect(() => {
     fetchConversations(1, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, status]);
+  }, [filters]);
 
   useEffect(() => {
     if (!token) return undefined;
@@ -147,8 +206,8 @@ function ConversationsPage() {
   }, [token, activeId]);
 
   const layoutState = useMemo(
-    () => ({ loadingList, loadingChat, hasMore, search, status, error }),
-    [loadingList, loadingChat, hasMore, search, status, error],
+    () => ({ loadingList, loadingChat, hasMore, filters, error }),
+    [loadingList, loadingChat, hasMore, filters, error],
   );
 
   return (
@@ -161,10 +220,9 @@ function ConversationsPage() {
           hasMore={layoutState.hasMore}
           onSelect={(c) => fetchConversationDetails(c)}
           onLoadMore={() => fetchConversations(page + 1, true)}
-          search={layoutState.search}
-          onSearch={(val) => setSearch(val)}
-          status={layoutState.status}
-          onStatusChange={(val) => setStatus(val)}
+          filters={filters}
+          onFiltersChange={setFilters}
+          resultCount={total}
         />
       </div>
 
