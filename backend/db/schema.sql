@@ -13,11 +13,15 @@ CREATE TABLE IF NOT EXISTS users (
   id BIGSERIAL PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'user',
   full_name TEXT NOT NULL,
   phone TEXT UNIQUE,
   company_name TEXT,
+  reset_password_token TEXT,
+  reset_password_expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT users_role_check CHECK (role IN ('user', 'admin'))
 );
 
 CREATE TRIGGER set_users_updated_at
@@ -98,6 +102,9 @@ CREATE TABLE IF NOT EXISTS quick_replies (
 );
 
 -- Supporting indexes for performant lookups.
+CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users (lower(email));
+CREATE INDEX IF NOT EXISTS idx_users_reset_token_expires ON users (reset_password_token, reset_password_expires_at)
+  WHERE reset_password_token IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_whatsapp_sessions_user_id ON whatsapp_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_whatsapp_sessions_phone_number ON whatsapp_sessions(phone_number);
 CREATE INDEX IF NOT EXISTS idx_conversations_user_status ON conversations(user_id, status);
