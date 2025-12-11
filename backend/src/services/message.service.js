@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const pool = require('../config/db');
 const redis = require('../config/redis');
 const logger = require('../utils/logger');
 

@@ -19,30 +19,37 @@
    ```bash
    cp .env.example .env
    ```
-2. ثبّت الحزم وشغّل الـ Backend:
+2. أنشئ قاعدة البيانات وشغّل مخطط الجداول:
+   ```bash
+   psql $DATABASE_URL -f backend/db/schema.sql
+   ```
+3. ثبّت الحزم وشغّل الـ Backend:
    ```bash
    cd backend
    npm install
    npm run dev
    ```
    سيتولد رمز QR في الطرفية لربط حساب WhatsApp.
-3. ثبّت الحزم وشغّل الـ Frontend في جلسة أخرى:
+4. ثبّت الحزم وشغّل الـ Frontend في جلسة أخرى:
    ```bash
    cd frontend
    npm install
    npm run dev
    ```
-4. افتح المتصفح على: http://localhost:5173
+5. افتح المتصفح على: http://localhost:5173
 
 ## هيكل المجلدات
 ```
 .
 ├── backend
+│   ├── db
+│   │   └── schema.sql
 │   ├── package.json
 │   └── src
 │       ├── app.js
 │       ├── config
 │       │   ├── database.js
+│       │   ├── db.js
 │       │   ├── env.js
 │       │   └── redis.js
 │       ├── controllers
