@@ -1,0 +1,166 @@
+BEGIN;
+
+-- Generic trigger to keep updated_at current.
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TABLE IF NOT EXISTS users (
+  id BIGSERIAL PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  password TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'user',
+  full_name TEXT NOT NULL,
+  phone TEXT UNIQUE,
+  company_name TEXT,
+  reset_password_token TEXT,
+  reset_password_expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT users_role_check CHECK (role IN ('user', 'admin'))
+);
+
+CREATE TRIGGER set_users_updated_at
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS whatsapp_sessions (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  session_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_connected BOOLEAN NOT NULL DEFAULT FALSE,
+  phone_number TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT whatsapp_sessions_user_phone_key UNIQUE (user_id, phone_number)
+);
+
+CREATE TABLE IF NOT EXISTS conversations (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  contact_phone TEXT NOT NULL,
+  contact_name TEXT,
+  status TEXT NOT NULL DEFAULT 'open',
+  priority SMALLINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT conversations_status_check CHECK (status IN ('open', 'pending', 'closed', 'archived')),
+  CONSTRAINT conversations_priority_check CHECK (priority BETWEEN 0 AND 5)
+);
+
+CREATE TRIGGER set_conversations_updated_at
+BEFORE UPDATE ON conversations
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS messages (
+  id BIGSERIAL PRIMARY KEY,
+  conversation_id BIGINT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  sender_type TEXT NOT NULL,
+  message_text TEXT,
+  media_url TEXT,
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  is_from_bot BOOLEAN NOT NULL DEFAULT FALSE,
+  CONSTRAINT messages_sender_type_check CHECK (sender_type IN ('contact', 'user', 'bot', 'system'))
+);
+
+CREATE TABLE IF NOT EXISTS knowledge_base (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  category TEXT,
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL,
+  embedding double precision[],
+  source TEXT,
+  source_name TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT knowledge_base_question_unique UNIQUE (user_id, question)
+);
+
+CREATE TRIGGER set_knowledge_base_updated_at
+BEFORE UPDATE ON knowledge_base
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS knowledge_documents (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  knowledge_id BIGINT REFERENCES knowledge_base(id) ON DELETE SET NULL,
+  filename TEXT NOT NULL,
+  mime_type TEXT,
+  file_size BIGINT,
+  storage_path TEXT,
+  text_content TEXT,
+  embedding double precision[],
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS ai_settings (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL,
+  model TEXT NOT NULL,
+  temperature NUMERIC(3, 2) NOT NULL DEFAULT 0.70,
+  max_tokens INTEGER,
+  system_prompt TEXT,
+  settings_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+  CONSTRAINT ai_settings_temperature_check CHECK (temperature >= 0 AND temperature <= 2),
+  CONSTRAINT ai_settings_max_tokens_check CHECK (max_tokens IS NULL OR max_tokens > 0),
+  CONSTRAINT ai_settings_user_provider_unique UNIQUE (user_id, provider)
+);
+
+CREATE TABLE IF NOT EXISTS quick_replies (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  message_text TEXT NOT NULL,
+  category TEXT,
+  CONSTRAINT quick_replies_user_title_unique UNIQUE (user_id, title)
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL DEFAULT 'info',
+  title TEXT NOT NULL,
+  message TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT notifications_type_check CHECK (type IN ('info', 'success', 'warning', 'error'))
+);
+
+CREATE TRIGGER set_notifications_updated_at
+BEFORE UPDATE ON notifications
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+-- Supporting indexes for performant lookups.
+CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users (lower(email));
+CREATE INDEX IF NOT EXISTS idx_users_reset_token_expires ON users (reset_password_token, reset_password_expires_at)
+  WHERE reset_password_token IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_whatsapp_sessions_user_id ON whatsapp_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_sessions_phone_number ON whatsapp_sessions(phone_number);
+CREATE INDEX IF NOT EXISTS idx_conversations_user_status ON conversations(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_conversations_contact ON conversations(user_id, contact_phone);
+CREATE INDEX IF NOT EXISTS idx_conversations_priority ON conversations(priority);
+CREATE INDEX IF NOT EXISTS idx_messages_conversation_timestamp ON messages(conversation_id, "timestamp" DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_is_from_bot ON messages(is_from_bot);
+CREATE INDEX IF NOT EXISTS idx_knowledge_base_user_category ON knowledge_base(user_id, category);
+CREATE INDEX IF NOT EXISTS idx_knowledge_base_updated_at ON knowledge_base(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_knowledge_documents_user_id ON knowledge_documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_documents_knowledge_id ON knowledge_documents(knowledge_id);
+CREATE INDEX IF NOT EXISTS idx_ai_settings_user_id ON ai_settings(user_id);
+CREATE INDEX IF NOT EXISTS idx_quick_replies_user_category ON quick_replies(user_id, category);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read) WHERE is_read = FALSE;
+
+COMMIT;
