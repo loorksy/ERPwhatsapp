@@ -11,6 +11,8 @@ const navItems = [
   { to: '/quick-replies', label: 'الردود السريعة' },
   { to: '/analytics', label: 'الإحصائيات' },
   { to: '/reports', label: 'التقارير' },
+  { to: '/admin', label: 'لوحة المدير' },
+  { to: '/admin/users', label: 'إدارة المستخدمين' },
   { to: '/advanced-settings', label: 'الإعدادات المتقدمة' },
   { to: '/settings', label: 'الإعدادات' },
 ];

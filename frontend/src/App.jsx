@@ -17,6 +17,8 @@ import AnalyticsPage from './pages/Analytics';
 import SettingsPage from './pages/Settings';
 import AdvancedSettingsPage from './pages/AdvancedSettings';
 import ReportsPage from './pages/Reports';
+import AdminDashboardPage from './pages/AdminDashboard';
+import UserManagementPage from './pages/UserManagement';
 import { Navigate } from 'react-router-dom';
 
 function App() {
@@ -33,6 +35,8 @@ function App() {
           <Route path="quick-replies" element={<QuickRepliesPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="admin" element={<AdminDashboardPage />} />
+          <Route path="admin/users" element={<UserManagementPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="advanced-settings" element={<AdvancedSettingsPage />} />
           <Route path="whatsapp-connect" element={<WhatsAppConnectPage />} />
