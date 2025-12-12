@@ -13,6 +13,8 @@ const navItems = [
   { to: '/reports', label: 'التقارير' },
   { to: '/admin', label: 'لوحة المدير' },
   { to: '/admin/users', label: 'إدارة المستخدمين' },
+  { to: '/admin/plans', label: 'خطط الاشتراك' },
+  { to: '/admin/providers', label: 'مزودي الذكاء' },
   { to: '/advanced-settings', label: 'الإعدادات المتقدمة' },
   { to: '/settings', label: 'الإعدادات' },
 ];

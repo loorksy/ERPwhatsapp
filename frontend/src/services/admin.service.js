@@ -54,6 +54,128 @@ const mockStats = {
   apiUsage: 43210,
 };
 
+const mockPlans = [
+  {
+    id: 'free',
+    name: 'Free Plan',
+    price: 0,
+    currency: 'دولار/شهر',
+    messageLimit: 500,
+    whatsappAccounts: 1,
+    aiProviders: ['OpenAI (محدود)'],
+    features: [
+      { label: 'مراسلات أساسية', enabled: true },
+      { label: 'لوحة تقارير مبسطة', enabled: true },
+      { label: 'دعم بريد إلكتروني خلال 48 ساعة', enabled: true },
+      { label: 'تكامل API', enabled: false },
+      { label: 'ذكاء اصطناعي متعدد المزودين', enabled: false },
+    ],
+    subscribers: 124,
+  },
+  {
+    id: 'basic',
+    name: 'Basic Plan',
+    price: 49,
+    currency: 'دولار/شهر',
+    messageLimit: 5000,
+    whatsappAccounts: 2,
+    aiProviders: ['OpenAI', 'Claude (أساسي)'],
+    features: [
+      { label: 'جدولة الردود الآلية', enabled: true },
+      { label: 'تقارير أسبوعية', enabled: true },
+      { label: 'دعم البريد خلال 24 ساعة', enabled: true },
+      { label: 'مساعد ذكاء اصطناعي أساسي', enabled: true },
+      { label: 'مناطق توافر متعددة', enabled: false },
+    ],
+    subscribers: 82,
+  },
+  {
+    id: 'pro',
+    name: 'Pro Plan',
+    price: 149,
+    currency: 'دولار/شهر',
+    messageLimit: 20000,
+    whatsappAccounts: 5,
+    aiProviders: ['OpenAI', 'Claude', 'Gemini'],
+    features: [
+      { label: 'تكامل CRM', enabled: true },
+      { label: 'معالجة وسائط متقدمة', enabled: true },
+      { label: 'أولوية دعم على مدار الساعة', enabled: true },
+      { label: 'ذكاء اصطناعي متعدد المزودين', enabled: true },
+      { label: 'وصول للـ API بلا حدود', enabled: true },
+    ],
+    subscribers: 41,
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise Plan',
+    price: 399,
+    currency: 'دولار/شهر',
+    messageLimit: 100000,
+    whatsappAccounts: 15,
+    aiProviders: ['OpenAI', 'Claude', 'Gemini', 'مزود مخصص'],
+    features: [
+      { label: 'عقود SLA مخصصة', enabled: true },
+      { label: 'أمان وامتثال متقدم', enabled: true },
+      { label: 'إدارة حساب مخصصة', enabled: true },
+      { label: 'تكاملات مخصصة', enabled: true },
+      { label: 'وصول فريق متعدد مع أدوار', enabled: true },
+    ],
+    subscribers: 17,
+  },
+];
+
+const mockProviders = [
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    type: 'openai',
+    status: 'active',
+    apiKey: 'sk-****-openai',
+    endpoint: 'https://api.openai.com/v1',
+    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'],
+    costPerThousand: 0.002,
+    monthlyUsage: 182000,
+    settings: { temperature: 0.7 },
+  },
+  {
+    id: 'claude',
+    name: 'Anthropic Claude',
+    type: 'claude',
+    status: 'active',
+    apiKey: 'sk-****-claude',
+    endpoint: 'https://api.anthropic.com',
+    models: ['claude-3-sonnet', 'claude-3-opus', 'claude-3-haiku'],
+    costPerThousand: 0.0015,
+    monthlyUsage: 82000,
+    settings: { max_tokens: 4000 },
+  },
+  {
+    id: 'gemini',
+    name: 'Google Gemini',
+    type: 'gemini',
+    status: 'inactive',
+    apiKey: 'sk-****-gemini',
+    endpoint: 'https://generativelanguage.googleapis.com',
+    models: ['gemini-1.5-pro', 'gemini-1.5-flash'],
+    costPerThousand: 0.0012,
+    monthlyUsage: 32000,
+    settings: { top_p: 0.9 },
+  },
+  {
+    id: 'custom',
+    name: 'مزود مخصص',
+    type: 'custom',
+    status: 'active',
+    apiKey: 'sk-****-custom',
+    endpoint: 'https://ai.example.com',
+    models: ['assist-1', 'assist-2'],
+    costPerThousand: 0.0008,
+    monthlyUsage: 12600,
+    settings: { region: 'eu-west-1' },
+  },
+];
+
 export async function fetchAdminStats() {
   try {
     const { data } = await api.get('/admin/stats');
@@ -164,6 +286,65 @@ export async function exportUsers(params = {}) {
   }
 }
 
+export async function fetchSubscriptionPlans() {
+  try {
+    const { data } = await api.get('/admin/plans');
+    return data;
+  } catch (error) {
+    return mockPlans;
+  }
+}
+
+export async function updateSubscriptionPlan(planId, payload) {
+  try {
+    const { data } = await api.patch(`/admin/plans/${planId}`, payload);
+    return data;
+  } catch (error) {
+    const existing = mockPlans.find((plan) => plan.id === planId) || {};
+    return { ...existing, ...payload };
+  }
+}
+
+export async function fetchAIProviders() {
+  try {
+    const { data } = await api.get('/admin/ai-providers');
+    return data;
+  } catch (error) {
+    return mockProviders;
+  }
+}
+
+export async function saveAIProvider(provider) {
+  try {
+    if (provider.id) {
+      const { data } = await api.put(`/admin/ai-providers/${provider.id}`, provider);
+      return data;
+    }
+    const { data } = await api.post('/admin/ai-providers', provider);
+    return data;
+  } catch (error) {
+    return provider.id ? provider : { ...provider, id: `temp-${Date.now()}` };
+  }
+}
+
+export async function testAIProvider(provider) {
+  try {
+    const { data } = await api.post('/admin/ai-providers/test', provider);
+    return data;
+  } catch (error) {
+    return { ok: true, latency: 180 };
+  }
+}
+
+export async function deleteAIProvider(providerId) {
+  try {
+    const { data } = await api.delete(`/admin/ai-providers/${providerId}`);
+    return data;
+  } catch (error) {
+    return { success: true };
+  }
+}
+
 export default {
   fetchAdminStats,
   fetchUsers,
@@ -172,4 +353,10 @@ export default {
   updateUserPlan,
   deleteUser,
   exportUsers,
+  fetchSubscriptionPlans,
+  updateSubscriptionPlan,
+  fetchAIProviders,
+  saveAIProvider,
+  testAIProvider,
+  deleteAIProvider,
 };

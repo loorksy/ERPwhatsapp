@@ -19,6 +19,8 @@ import AdvancedSettingsPage from './pages/AdvancedSettings';
 import ReportsPage from './pages/Reports';
 import AdminDashboardPage from './pages/AdminDashboard';
 import UserManagementPage from './pages/UserManagement';
+import SubscriptionPlansPage from './pages/SubscriptionPlans';
+import AIProvidersPage from './pages/AIProviders';
 import { Navigate } from 'react-router-dom';
 
 function App() {
@@ -37,6 +39,8 @@ function App() {
           <Route path="reports" element={<ReportsPage />} />
           <Route path="admin" element={<AdminDashboardPage />} />
           <Route path="admin/users" element={<UserManagementPage />} />
+          <Route path="admin/plans" element={<SubscriptionPlansPage />} />
+          <Route path="admin/providers" element={<AIProvidersPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="advanced-settings" element={<AdvancedSettingsPage />} />
           <Route path="whatsapp-connect" element={<WhatsAppConnectPage />} />
