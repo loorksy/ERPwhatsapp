@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const logger = require('../utils/logger');
 const env = require('../config/env');
+const notificationService = require('../services/notification.service');
 
 const normalizePhone = (phone) => (phone ? phone.replace(/\D/g, '') : null);
 
@@ -121,6 +122,34 @@ const processIncomingMessage = async (userId, waMessage) => {
 
   const shouldRespond = await shouldBotRespond(conversation, savedMessage);
   const intent = await detectIntent(waMessage.body || '');
+
+  if (!waMessage.fromMe) {
+    try {
+      await notificationService.createNotification({
+        userId,
+        type: 'info',
+        title: 'رسالة جديدة',
+        message: `رسالة جديدة من ${contactName || contactPhone}`,
+        metadata: { conversationId: conversation.id, messageId: savedMessage.id },
+      });
+    } catch (error) {
+      logger.error('[notification] Failed to push new message notification', error);
+    }
+  }
+
+  if (intent.intent === 'handoff') {
+    try {
+      await notificationService.createNotification({
+        userId,
+        type: 'warning',
+        title: 'محادثة تحتاج تدخل',
+        message: `يحتاج ${contactName || contactPhone} إلى تدخل بشري`,
+        metadata: { conversationId: conversation.id, intent },
+      });
+    } catch (error) {
+      logger.error('[notification] Failed to push escalation notification', error);
+    }
+  }
 
   return { conversation, message: savedMessage, shouldRespond, intent };
 };

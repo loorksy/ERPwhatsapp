@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api.service';
 import { useAuth } from '../context/AuthContext';
+import NotificationBell from './NotificationBell';
 
 const navItems = [
   { to: '/overview', label: 'نظرة عامة' },
@@ -25,12 +26,7 @@ function AppLayout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [whatsAppStatus, setWhatsAppStatus] = useState('checking');
-  const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, message: 'تم ربط واتساب بنجاح', time: 'قبل دقيقة' },
-    { id: 2, message: 'محادثة جديدة من 201234567890', time: 'قبل 5 دقائق' },
-  ]);
 
   const activeNav = useMemo(() => navItems.find((item) => location.pathname.startsWith(item.to)), [location.pathname]);
 
@@ -66,8 +62,6 @@ function AppLayout() {
     disconnected: 'غير متصل',
     checking: 'يتم الفحص',
   }[whatsAppStatus];
-
-  const unreadCount = notifications.length;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -137,38 +131,7 @@ function AppLayout() {
                   <span>حالة واتساب: {statusLabel}</span>
                 </div>
 
-                <div className="relative">
-                  <button
-                    type="button"
-                    className="relative rounded-full border border-slate-200 p-2 text-slate-600 hover:border-indigo-200 hover:text-indigo-700"
-                    onClick={() => {
-                      setNotificationOpen((prev) => !prev);
-                      setProfileOpen(false);
-                    }}
-                  >
-                    <span className="sr-only">الإشعارات</span>
-                    🔔
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -left-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </button>
-                  {notificationOpen && (
-                    <div className="absolute left-0 mt-2 w-72 rounded-lg border border-slate-200 bg-white shadow-lg">
-                      <div className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800">الإشعارات</div>
-                      <div className="max-h-64 space-y-2 overflow-y-auto px-4 py-3 text-sm text-slate-700">
-                        {notifications.map((item) => (
-                          <div key={item.id} className="rounded-lg bg-slate-50 px-3 py-2">
-                            <p>{item.message}</p>
-                            <p className="text-[11px] text-slate-500">{item.time}</p>
-                          </div>
-                        ))}
-                        {notifications.length === 0 && <p className="text-center text-slate-500">لا توجد إشعارات</p>}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <NotificationBell />
 
                 <div className="relative">
                   <button

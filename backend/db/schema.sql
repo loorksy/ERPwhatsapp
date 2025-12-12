@@ -125,6 +125,24 @@ CREATE TABLE IF NOT EXISTS quick_replies (
   CONSTRAINT quick_replies_user_title_unique UNIQUE (user_id, title)
 );
 
+CREATE TABLE IF NOT EXISTS notifications (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL DEFAULT 'info',
+  title TEXT NOT NULL,
+  message TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT notifications_type_check CHECK (type IN ('info', 'success', 'warning', 'error'))
+);
+
+CREATE TRIGGER set_notifications_updated_at
+BEFORE UPDATE ON notifications
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
 -- Supporting indexes for performant lookups.
 CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users (lower(email));
 CREATE INDEX IF NOT EXISTS idx_users_reset_token_expires ON users (reset_password_token, reset_password_expires_at)
@@ -142,5 +160,7 @@ CREATE INDEX IF NOT EXISTS idx_knowledge_documents_user_id ON knowledge_document
 CREATE INDEX IF NOT EXISTS idx_knowledge_documents_knowledge_id ON knowledge_documents(knowledge_id);
 CREATE INDEX IF NOT EXISTS idx_ai_settings_user_id ON ai_settings(user_id);
 CREATE INDEX IF NOT EXISTS idx_quick_replies_user_category ON quick_replies(user_id, category);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read) WHERE is_read = FALSE;
 
 COMMIT;

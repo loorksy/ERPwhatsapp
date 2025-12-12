@@ -6,6 +6,7 @@ const whatsappRoutes = require('./whatsapp.routes');
 const conversationRoutes = require('./conversation.routes');
 const aiRoutes = require('./ai.routes');
 const knowledgeRoutes = require('./knowledge.routes');
+const notificationRoutes = require('./notification.routes');
 const { verifyToken } = require('../middleware/auth.middleware');
 
 const router = Router();
@@ -18,5 +19,6 @@ router.use('/whatsapp', whatsappRoutes);
 router.use('/conversations', conversationRoutes);
 router.use('/ai', aiRoutes);
 router.use('/knowledge', knowledgeRoutes);
+router.use('/notifications', notificationRoutes);
 
 module.exports = router;

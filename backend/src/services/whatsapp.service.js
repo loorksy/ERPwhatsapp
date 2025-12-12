@@ -4,6 +4,7 @@ const pool = require('../config/db');
 const env = require('../config/env');
 const logger = require('../utils/logger');
 const messageHandler = require('../handlers/message.handler');
+const notificationService = require('./notification.service');
 
 class WhatsAppService {
   constructor() {
@@ -165,6 +166,18 @@ class WhatsAppService {
     sessionState.isReady = false;
     this.sessions.set(userId, sessionState);
     await this.saveSession(userId, { status: 'disconnected', reason }, sessionState.phoneNumber, false);
+
+    try {
+      await notificationService.createNotification({
+        userId,
+        type: reason === 'auth_failure' ? 'error' : 'warning',
+        title: 'انقطاع اتصال واتساب',
+        message: `تم قطع الاتصال بسبب: ${reason}`,
+        metadata: { reason },
+      });
+    } catch (error) {
+      logger.error('[notification] Failed to push WhatsApp disconnect alert', error);
+    }
 
     if (sessionState.client) {
       try {

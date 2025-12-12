@@ -5,6 +5,7 @@ const env = require('./config/env');
 const pool = require('./config/db');
 const redis = require('./config/redis');
 const whatsappService = require('./services/whatsapp.service');
+const notificationService = require('./services/notification.service');
 const logger = require('./utils/logger');
 
 async function bootstrap() {
@@ -43,6 +44,7 @@ async function bootstrap() {
     });
 
     whatsappService.attachSocket(io);
+    notificationService.attachSocket(io);
 
     server.listen(env.port, () => {
       logger.info(`🚀 API server ready on port ${env.port}`);
