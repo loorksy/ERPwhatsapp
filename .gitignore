@@ -10,3 +10,5 @@ uploads/
 backend/uploads/
 backend/dist
 frontend/dist
+logs
+backend/logs

@@ -11,6 +11,7 @@
 - نظام قاعدة معرفة ببحث نصي ودلالي مع رفع مستندات PDF/DOCX/TXT وتوليد Embeddings.
 - هيكل منظم وقابل للتوسع لإضافة الذكاء الاصطناعي والخدمات الخارجية.
 - لوحة تحكم للمشرف مع إحصائيات النظام وإدارة المستخدمين، التصدير، والفلاتر المتقدمة.
+- حماية أمنية افتراضية تشمل Helmet وCSRF Tokens وRate Limiting وتطهير المدخلات وتسجيل مركزي للعمليات الحساسة.
 
 ## المتطلبات المسبقة
 - Node.js 18+
@@ -19,7 +20,7 @@
 - متصفح Chromium/Chrome للسماح بتوليد رمز الـ QR في `whatsapp-web.js`.
 
 ## الإعداد السريع
-1. انسخ ملف المتغيرات البيئية:
+1. انسخ ملف المتغيرات البيئية (إلزامي مع `dotenv-safe`):
    ```bash
    cp .env.example .env
    ```
@@ -42,6 +43,8 @@
    ```
 5. افتح المتصفح على: http://localhost:5173
 
+> يتم تحميل متغيرات البيئة عبر `dotenv-safe`، لذا يجب ضبط كل القيم المطلوبة أو إبقاء القيم الافتراضية في `.env.example` قبل تشغيل الخوادم.
+
 ## هيكل المجلدات
 ```
 .
@@ -62,15 +65,20 @@
 │       │   ├── knowledge.controller.js
 │       │   ├── health.controller.js
 │       │   ├── message.controller.js
+│       │   ├── notification.controller.js
 │       │   └── whatsapp.controller.js
 │       ├── index.js
 │       ├── middleware
-│       │   └── auth.middleware.js
+│       │   ├── auth.middleware.js
+│       │   ├── rateLimit.middleware.js
+│       │   └── sanitize.middleware.js
 │       ├── routes
 │       │   ├── auth.routes.js
 │       │   ├── ai.routes.js
 │       │   ├── knowledge.routes.js
+│       │   ├── conversation.routes.js
 │       │   ├── index.js
+│       │   ├── notification.routes.js
 │       │   └── whatsapp.routes.js
 │       ├── services
 │       │   ├── message.service.js
@@ -115,6 +123,13 @@
 - أضف قواعد linter/formatter (مثل ESLint و Prettier) لتطبيق معايير الكود.
 - حدّث منطق `message.service.js` لتخزين الرسائل وتشغيل تدفقات الذكاء الاصطناعي.
 
+## الأمان
+- **Helmet**: تفعيل ترويسات حماية (`CSP`, `HSTS`, `X-Frame-Options`، إلخ) افتراضياً.
+- **Rate Limiting**: 100 طلب/دقيقة لكل IP على `/api` و5 محاولات/15 دقيقة لتسجيل الدخول مع ردود قياسية.
+- **CSRF**: تفعيل `csurf` مع Cookies/Headers (`XSRF-TOKEN` و`X-CSRF-Token`). يمكن جلب رمز جديد عبر `GET /api/csrf-token` ويُرسل تلقائيًا من الواجهة عبر Axios.
+- **تطهير المدخلات**: تمرير جميع القيم عبر `DOMPurify` على الخادم بالإضافة إلى `express-validator` للتحقق.
+- **التسجيل والمراقبة**: استخدام Winston لتسجيل الأخطاء والطلبات الحساسة في `logs/error.log`, `logs/combined.log`, `logs/access.log`.
+
 ## الذكاء الاصطناعي متعدد المزودين
 - تم تغليف مزودي OpenAI وAnthropic Claude وGoogle Gemini في طبقة خدمات قابلة للتوسعة مع آلية إعادة المحاولة.
 - الحقول المدعومة للإعدادات: `provider`, `model`, `temperature`, `maxTokens`, `systemPrompt`, `settings` (JSON عام للمفاتيح/الخيارات الخاصة).
@@ -142,7 +157,7 @@
   - `POST /api/messages/send`: إرسال رسالة بعد تمرير `phone` و`message` (يتطلب اتصال WhatsApp جاهزًا).
 - مسار جلسة WhatsApp يدار عبر `LocalAuth` مع دعم الأجهزة المتعددة وتتم مزامنته مع جدول `whatsapp_sessions`.
 - استخدم طبقة خدمات أو Workers مع Redis للتعامل مع الحمل المرتفع ومعالجة الرسائل.
-- استبدل الـ logger الحالي بحل إنتاجي مثل `pino` أو `winston` مع ربطه بمزود مراقبة.
+- مفعّل Winston للتسجيل مع ملفات منفصلة ويمكن ربطه بمزود مراقبة خارجي.
 
 ## إدارة المحادثات والرسائل
 - المعالجة الخلفية للرسائل الواردة تحفظ الوسائط (base64 data URL)، تنشئ محادثة تلقائيًا، وتكتشف نية المستخدم بشكل أولي لتحديد ما إذا كان البوت سيرد (مع فحص أوقات العمل الاختيارية).

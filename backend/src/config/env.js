@@ -1,7 +1,10 @@
 const path = require('path');
-const dotenv = require('dotenv');
+const dotenvSafe = require('dotenv-safe');
 
-dotenv.config();
+dotenvSafe.config({
+  allowEmptyValues: false,
+  example: path.join(process.cwd(), '.env.example'),
+});
 
 const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -13,6 +16,10 @@ const env = {
   jwtSecret: process.env.JWT_SECRET || 'change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1h',
   resetTokenExpiresMinutes: Number(process.env.RESET_TOKEN_EXPIRES_MINUTES) || 60,
+  loginRateLimitWindowMinutes: Number(process.env.LOGIN_RATE_LIMIT_WINDOW_MINUTES) || 15,
+  loginRateLimitMax: Number(process.env.LOGIN_RATE_LIMIT_MAX) || 5,
+  apiRateLimitWindowMinutes: Number(process.env.API_RATE_LIMIT_WINDOW_MINUTES) || 1,
+  apiRateLimitMax: Number(process.env.API_RATE_LIMIT_MAX) || 100,
   operatingHoursStart: process.env.OPERATING_HOURS_START || '',
   operatingHoursEnd: process.env.OPERATING_HOURS_END || '',
   whatsappSessionPath:
@@ -25,6 +32,10 @@ const env = {
   embeddingModel: process.env.EMBEDDING_MODEL || 'text-embedding-3-small',
   knowledgeUploadDir: process.env.KNOWLEDGE_UPLOAD_DIR || path.join(process.cwd(), 'uploads'),
   maxUploadSizeMb: Number(process.env.MAX_UPLOAD_SIZE_MB) || 10,
+  logLevel: process.env.LOG_LEVEL || 'info',
+  logDir: process.env.LOG_DIR || path.join(process.cwd(), 'logs'),
+  csrfCookieName: process.env.CSRF_COOKIE_NAME || 'XSRF-TOKEN',
+  csrfHeaderName: process.env.CSRF_HEADER_NAME || 'X-CSRF-Token',
 };
 
 module.exports = env;

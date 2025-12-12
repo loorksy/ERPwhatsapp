@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const { validationResult } = require('express-validator');
 const pool = require('../config/db');
 const env = require('../config/env');
+const logger = require('../utils/logger');
 
 const SALT_ROUNDS = 12;
 
@@ -42,22 +43,29 @@ const register = async (req, res) => {
   const { email, password, fullName, phone, companyName } = req.body;
   const normalizedEmail = email.trim().toLowerCase();
 
-  const existing = await pool.query('SELECT id FROM users WHERE lower(email) = $1', [normalizedEmail]);
-  if (existing.rows.length > 0) {
-    return res.status(409).json({ message: 'Email is already registered' });
+  try {
+    const existing = await pool.query('SELECT id FROM users WHERE lower(email) = $1', [normalizedEmail]);
+    if (existing.rows.length > 0) {
+      logger.warn('Attempted registration with existing email', { email: normalizedEmail, ip: req.ip });
+      return res.status(409).json({ message: 'Email is already registered' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    const result = await pool.query(
+      `INSERT INTO users (email, password, full_name, phone, company_name)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, email, full_name, phone, company_name, role, created_at`,
+      [normalizedEmail, hashedPassword, fullName, phone || null, companyName || null]
+    );
+
+    const user = formatUser(result.rows[0]);
+    const token = buildToken(user);
+    logger.info('User registered', { userId: user.id, email: normalizedEmail, ip: req.ip });
+    return res.status(201).json({ user, token });
+  } catch (error) {
+    logger.error('Registration failed', error);
+    return res.status(500).json({ message: 'Unable to register user' });
   }
-
-  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-  const result = await pool.query(
-    `INSERT INTO users (email, password, full_name, phone, company_name)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING id, email, full_name, phone, company_name, role, created_at`,
-    [normalizedEmail, hashedPassword, fullName, phone || null, companyName || null]
-  );
-
-  const user = formatUser(result.rows[0]);
-  const token = buildToken(user);
-  return res.status(201).json({ user, token });
 };
 
 const login = async (req, res) => {
@@ -67,24 +75,32 @@ const login = async (req, res) => {
   const { email, password } = req.body;
   const normalizedEmail = email.trim().toLowerCase();
 
-  const result = await pool.query(
-    'SELECT id, email, password, full_name, phone, company_name, role FROM users WHERE lower(email) = $1',
-    [normalizedEmail]
-  );
+  try {
+    const result = await pool.query(
+      'SELECT id, email, password, full_name, phone, company_name, role FROM users WHERE lower(email) = $1',
+      [normalizedEmail]
+    );
 
-  if (result.rows.length === 0) {
-    return res.status(401).json({ message: 'Invalid credentials' });
+    if (result.rows.length === 0) {
+      logger.warn('Login failed: email not found', { email: normalizedEmail, ip: req.ip });
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const userRow = result.rows[0];
+    const passwordMatches = await bcrypt.compare(password, userRow.password);
+    if (!passwordMatches) {
+      logger.warn('Login failed: bad password', { userId: userRow.id, ip: req.ip });
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const user = formatUser(userRow);
+    const token = buildToken(user);
+    logger.info('Login successful', { userId: user.id, ip: req.ip });
+    return res.json({ user, token });
+  } catch (error) {
+    logger.error('Login failed', error);
+    return res.status(500).json({ message: 'Unable to login' });
   }
-
-  const userRow = result.rows[0];
-  const passwordMatches = await bcrypt.compare(password, userRow.password);
-  if (!passwordMatches) {
-    return res.status(401).json({ message: 'Invalid credentials' });
-  }
-
-  const user = formatUser(userRow);
-  const token = buildToken(user);
-  return res.json({ user, token });
 };
 
 const logout = async (_req, res) => res.json({ message: 'Logged out successfully' });
@@ -95,30 +111,38 @@ const forgotPassword = async (req, res) => {
 
   const { email } = req.body;
   const normalizedEmail = email.trim().toLowerCase();
-  const result = await pool.query('SELECT id FROM users WHERE lower(email) = $1', [normalizedEmail]);
+  try {
+    const result = await pool.query('SELECT id FROM users WHERE lower(email) = $1', [normalizedEmail]);
 
-  if (result.rows.length === 0) {
-    return res.json({ message: 'If the account exists, a reset link has been sent' });
+    if (result.rows.length === 0) {
+      logger.warn('Password reset requested for unknown email', { email: normalizedEmail, ip: req.ip });
+      return res.json({ message: 'If the account exists, a reset link has been sent' });
+    }
+
+    const userId = result.rows[0].id;
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const expiresAt = new Date(Date.now() + env.resetTokenExpiresMinutes * 60 * 1000);
+
+    await pool.query(
+      `UPDATE users
+       SET reset_password_token = $1, reset_password_expires_at = $2
+       WHERE id = $3`,
+      [hashedToken, expiresAt.toISOString(), userId]
+    );
+
+    logger.info('Password reset token issued', { userId, ip: req.ip });
+
+    const response = { message: 'If the account exists, a reset link has been sent' };
+    if (env.nodeEnv !== 'production') {
+      response.resetToken = resetToken;
+    }
+
+    return res.json(response);
+  } catch (error) {
+    logger.error('Failed to issue reset token', error);
+    return res.status(500).json({ message: 'Unable to process request' });
   }
-
-  const userId = result.rows[0].id;
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-  const expiresAt = new Date(Date.now() + env.resetTokenExpiresMinutes * 60 * 1000);
-
-  await pool.query(
-    `UPDATE users
-     SET reset_password_token = $1, reset_password_expires_at = $2
-     WHERE id = $3`,
-    [hashedToken, expiresAt.toISOString(), userId]
-  );
-
-  const response = { message: 'If the account exists, a reset link has been sent' };
-  if (env.nodeEnv !== 'production') {
-    response.resetToken = resetToken;
-  }
-
-  return res.json(response);
 };
 
 const resetPassword = async (req, res) => {
@@ -128,28 +152,35 @@ const resetPassword = async (req, res) => {
   const { token, password } = req.body;
   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-  const result = await pool.query(
-    `SELECT id FROM users
-     WHERE reset_password_token = $1
-       AND reset_password_expires_at > NOW()`,
-    [hashedToken]
-  );
+  try {
+    const result = await pool.query(
+      `SELECT id FROM users
+       WHERE reset_password_token = $1
+         AND reset_password_expires_at > NOW()`,
+      [hashedToken]
+    );
 
-  if (result.rows.length === 0) {
-    return res.status(400).json({ message: 'Invalid or expired reset token' });
+    if (result.rows.length === 0) {
+      logger.warn('Invalid reset token used', { ip: req.ip });
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    const userId = result.rows[0].id;
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    await pool.query(
+      `UPDATE users
+       SET password = $1, reset_password_token = NULL, reset_password_expires_at = NULL
+       WHERE id = $2`,
+      [hashedPassword, userId]
+    );
+
+    logger.info('Password reset successfully', { userId, ip: req.ip });
+    return res.json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    logger.error('Failed to reset password', error);
+    return res.status(500).json({ message: 'Unable to reset password' });
   }
-
-  const userId = result.rows[0].id;
-  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
-  await pool.query(
-    `UPDATE users
-     SET password = $1, reset_password_token = NULL, reset_password_expires_at = NULL
-     WHERE id = $2`,
-    [hashedPassword, userId]
-  );
-
-  return res.json({ message: 'Password has been reset successfully' });
 };
 
 module.exports = {
