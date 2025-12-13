@@ -1,0 +1,35 @@
+{
+  "nav": {
+    "overview": "نظرة عامة",
+    "dashboard": "لوحة التحكم",
+    "conversations": "المحادثات",
+    "knowledge": "قاعدة المعرفة",
+    "aiSettings": "إعدادات الذكاء",
+    "quickReplies": "الردود السريعة",
+    "analytics": "الإحصائيات",
+    "reports": "التقارير",
+    "admin": "لوحة المدير",
+    "adminUsers": "إدارة المستخدمين",
+    "adminPlans": "خطط الاشتراك",
+    "adminProviders": "مزودي الذكاء",
+    "advancedSettings": "الإعدادات المتقدمة",
+    "settings": "الإعدادات",
+    "whatsappConnect": "ربط واتساب"
+  },
+  "layout": {
+    "menu": "القائمة",
+    "close": "إغلاق",
+    "currentPath": "المسار الحالي",
+    "hi": "مرحباً",
+    "userRole": "دور المستخدم",
+    "logout": "تسجيل الخروج",
+    "profile": "الملف الشخصي",
+    "whatsappStatus": "حالة واتساب",
+    "connected": "متصل",
+    "disconnected": "غير متصل",
+    "checking": "يتم الفحص"
+  },
+  "language": {
+    "switch": "English"
+  }
+}

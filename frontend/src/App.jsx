@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Route, Routes } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AppLayout from './components/AppLayout';
 import GuestRoute from './components/GuestRoute';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -22,8 +24,16 @@ import UserManagementPage from './pages/UserManagement';
 import SubscriptionPlansPage from './pages/SubscriptionPlans';
 import AIProvidersPage from './pages/AIProviders';
 import { Navigate } from 'react-router-dom';
+import './i18n';
 
 function App() {
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    document.documentElement.lang = i18n.language;
+    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+  }, [i18n.language]);
+
   return (
     <Routes>
       <Route element={<ProtectedRoute />}>

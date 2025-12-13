@@ -1,0 +1,35 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "dashboard": "Dashboard",
+    "conversations": "Conversations",
+    "knowledge": "Knowledge Base",
+    "aiSettings": "AI Settings",
+    "quickReplies": "Quick Replies",
+    "analytics": "Analytics",
+    "reports": "Reports",
+    "admin": "Admin",
+    "adminUsers": "User Management",
+    "adminPlans": "Subscription Plans",
+    "adminProviders": "AI Providers",
+    "advancedSettings": "Advanced Settings",
+    "settings": "Settings",
+    "whatsappConnect": "WhatsApp Connect"
+  },
+  "layout": {
+    "menu": "Menu",
+    "close": "Close",
+    "currentPath": "Current Path",
+    "hi": "Hi",
+    "userRole": "User Role",
+    "logout": "Logout",
+    "profile": "Profile",
+    "whatsappStatus": "WhatsApp Status",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "checking": "Checking"
+  },
+  "language": {
+    "switch": "العربية"
+  }
+}

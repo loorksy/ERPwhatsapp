@@ -1,29 +1,32 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../services/api.service';
 import { useAuth } from '../context/AuthContext.jsx';
 import NotificationBell from './NotificationBell';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const navItems = [
-  { to: '/overview', label: 'نظرة عامة' },
-  { to: '/conversations', label: 'المحادثات' },
-  { to: '/knowledge', label: 'قاعدة المعرفة' },
-  { to: '/ai-settings', label: 'إعدادات AI' },
-  { to: '/quick-replies', label: 'الردود السريعة' },
-  { to: '/analytics', label: 'الإحصائيات' },
-  { to: '/reports', label: 'التقارير' },
-  { to: '/admin', label: 'لوحة المدير' },
-  { to: '/admin/users', label: 'إدارة المستخدمين' },
-  { to: '/admin/plans', label: 'خطط الاشتراك' },
-  { to: '/admin/providers', label: 'مزودي الذكاء' },
-  { to: '/advanced-settings', label: 'الإعدادات المتقدمة' },
-  { to: '/settings', label: 'الإعدادات' },
+  { to: '/overview', label: 'nav.overview' },
+  { to: '/conversations', label: 'nav.conversations' },
+  { to: '/knowledge', label: 'nav.knowledge' },
+  { to: '/ai-settings', label: 'nav.aiSettings' },
+  { to: '/quick-replies', label: 'nav.quickReplies' },
+  { to: '/analytics', label: 'nav.analytics' },
+  { to: '/reports', label: 'nav.reports' },
+  { to: '/admin', label: 'nav.admin' },
+  { to: '/admin/users', label: 'nav.adminUsers' },
+  { to: '/admin/plans', label: 'nav.adminPlans' },
+  { to: '/admin/providers', label: 'nav.adminProviders' },
+  { to: '/advanced-settings', label: 'nav.advancedSettings' },
+  { to: '/settings', label: 'nav.settings' },
 ];
 
 function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [whatsAppStatus, setWhatsAppStatus] = useState('checking');
   const [profileOpen, setProfileOpen] = useState(false);
@@ -58,9 +61,9 @@ function AppLayout() {
   }[whatsAppStatus];
 
   const statusLabel = {
-    connected: 'متصل',
-    disconnected: 'غير متصل',
-    checking: 'يتم الفحص',
+    connected: t('layout.connected'),
+    disconnected: t('layout.disconnected'),
+    checking: t('layout.checking'),
   }[whatsAppStatus];
 
   return (
@@ -76,7 +79,7 @@ function AppLayout() {
               className="rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-600 md:hidden"
               onClick={() => setSidebarOpen(false)}
             >
-              إغلاق
+              {t('layout.close')}
             </button>
           </div>
           <nav className="space-y-1 px-4 py-4 text-sm font-semibold text-slate-700">
@@ -90,7 +93,7 @@ function AppLayout() {
                   }`
                 }
               >
-                <span>{item.label}</span>
+                <span>{t(item.label)}</span>
                 <span className="text-[10px] text-slate-400">›</span>
               </NavLink>
             ))}
@@ -102,7 +105,7 @@ function AppLayout() {
                 }`
               }
             >
-              <span>ربط واتساب</span>
+              <span>{t('nav.whatsappConnect')}</span>
               <span className="text-[10px] text-slate-400">›</span>
             </NavLink>
           </nav>
@@ -117,21 +120,24 @@ function AppLayout() {
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:text-indigo-700 md:hidden"
                   onClick={() => setSidebarOpen(true)}
                 >
-                  القائمة
+                  {t('layout.menu')}
                 </button>
                 <div>
-                  <p className="text-xs text-slate-500">المسار الحالي</p>
-                  <p className="text-sm font-semibold text-slate-900">{activeNav?.label || 'لوحة التحكم'}</p>
+                  <p className="text-xs text-slate-500">{t('layout.currentPath')}</p>
+                  <p className="text-sm font-semibold text-slate-900">{(activeNav && t(activeNav.label)) || t('nav.dashboard')}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
                 <div className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${statusBadge}`}>
                   <span className="h-2 w-2 rounded-full bg-current" />
-                  <span>حالة واتساب: {statusLabel}</span>
+                  <span>
+                    {t('layout.whatsappStatus')}: {statusLabel}
+                  </span>
                 </div>
 
                 <NotificationBell />
+                <LanguageSwitcher />
 
                 <div className="relative">
                   <button
@@ -139,31 +145,32 @@ function AppLayout() {
                     className="flex items-center gap-3 rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:text-indigo-700"
                     onClick={() => {
                       setProfileOpen((prev) => !prev);
-                      setNotificationOpen(false);
                     }}
                   >
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
                       {user?.full_name?.slice(0, 2)?.toUpperCase() || 'U'}
                     </div>
                     <div className="hidden text-right sm:block">
-                      <p className="text-xs text-slate-500">مرحباً</p>
-                      <p className="text-sm font-semibold text-slate-900">{user?.full_name || 'مستخدم'}</p>
+                      <p className="text-xs text-slate-500">{t('layout.hi')}</p>
+                      <p className="text-sm font-semibold text-slate-900">{user?.full_name || 'User'}</p>
                     </div>
                     <span className="text-slate-400">▼</span>
                   </button>
                   {profileOpen && (
                     <div className="absolute left-0 mt-2 w-56 rounded-lg border border-slate-200 bg-white shadow-lg">
-                      <div className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800">الملف الشخصي</div>
+                      <div className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800">{t('layout.profile')}</div>
                       <div className="space-y-1 px-4 py-3 text-sm text-slate-700">
                         <p className="truncate font-semibold">{user?.email}</p>
-                        <p className="text-xs text-slate-500">دور المستخدم: {user?.role || 'عضو'}</p>
+                        <p className="text-xs text-slate-500">
+                          {t('layout.userRole')}: {user?.role || 'Member'}
+                        </p>
                       </div>
                       <button
                         type="button"
                         onClick={handleLogout}
                         className="block w-full border-t border-slate-200 px-4 py-2 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50"
                       >
-                        تسجيل الخروج
+                        {t('layout.logout')}
                       </button>
                     </div>
                   )}
