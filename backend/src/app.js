@@ -13,6 +13,11 @@ const logger = require('./utils/logger');
 
 const app = express();
 
+// Respect proxy headers for secure cookies and logging behind Nginx
+if (env.trustProxy) {
+  app.set('trust proxy', 1);
+}
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -66,8 +71,18 @@ const csrfProtection = csrf({
   headerName: env.csrfHeaderName,
 });
 
-app.use(csrfProtection);
+// Health endpoint must always work; skip CSRF validation there
 app.use((req, res, next) => {
+  if (req.path === '/api/health') {
+    return next();
+  }
+  return csrfProtection(req, res, next);
+});
+
+app.use((req, res, next) => {
+  if (req.path === '/api/health') {
+    return next();
+  }
   const token = req.csrfToken();
   res.cookie(env.csrfCookieName, token, {
     httpOnly: false,
@@ -80,7 +95,14 @@ app.use((req, res, next) => {
 });
 
 app.get('/api/csrf-token', (req, res) => {
-  res.json({ csrfToken: req.csrfToken() });
+  const token = req.csrfToken();
+  res.cookie(env.csrfCookieName, token, {
+    httpOnly: false,
+    sameSite: 'lax',
+    secure: env.nodeEnv === 'production',
+    domain: env.cookieDomain,
+  });
+  res.json({ csrfToken: token });
 });
 
 app.use('/api', routes);

@@ -48,12 +48,8 @@
 ## النشر على الإنتاج (bot2.lork.cloud)
 1. **ضبط DNS**: وجّه `bot2.lork.cloud` إلى عنوان الـ VPS العام.
 2. **إعداد المتغيرات البيئية (الخادم)**:
-   - انسخ القالب: `cp .env.example backend/.env` ثم حدّث القيم المهمة:
-     - `PORT=5001`
-     - `FRONTEND_URL=https://bot2.lork.cloud`
-     - `CORS_ORIGINS=https://bot2.lork.cloud`
-     - `COOKIE_DOMAIN=.lork.cloud`
-     - بيانات القاعدة/Redis ومفاتيح المزودين (استخدم قيمًا حقيقية، وتجنّب مشاركتها في Git).
+   - انسخ القالب: `cp backend/.env.example backend/.env` (القالب مضبوط للإنتاج على `bot2.lork.cloud`).
+   - تأكد من القيم الحساسة: بيانات القاعدة/Redis ومفاتيح المزودين (استخدم قيمًا حقيقية، وتجنّب مشاركتها في Git).
 3. **Nginx**:
    - انسخ القالب إلى السيرفر: `/etc/nginx/sites-available/bot2.lork.cloud.conf` من `deploy/nginx/bot2.lork.cloud.conf`.
    - فعّل الموقع: `sudo ln -sf /etc/nginx/sites-available/bot2.lork.cloud.conf /etc/nginx/sites-enabled/`
@@ -72,6 +68,7 @@
    - تأكد أن `proxy_pass` في `/api` لا يحتوي على شرطة مائلة إضافية (القالب مهيأ بالفعل).
    - CORS/CSRF: يجب أن يطابق `FRONTEND_URL` و`CORS_ORIGINS` الدومين الفعلي مع `credentials=true`، ولا يُسمح بـ `*`.
    - ملفات تعريف الارتباط: في الإنتاج تستخدم `Secure` و`SameSite=lax` مع `COOKIE_DOMAIN=.lork.cloud` لضمان مشاركة الرمز عبر الواجهة و API على نفس الدومين.
+   - متغيرات البيئة تُحمّل تلقائيًا (backend/.env أولًا ثم جذر المشروع) مع قيم افتراضية آمنة لتفادي أعطال `dotenv-safe` عند إعادة تشغيل PM2.
 
 ## هيكل المجلدات
 ```
