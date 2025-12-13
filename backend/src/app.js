@@ -21,7 +21,7 @@ app.use(
         scriptSrc: ["'self'", 'https:'],
         styleSrc: ["'self'", 'https:', "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'", '*'],
+        connectSrc: ["'self'", ...env.corsOrigins],
         frameAncestors: ["'none'"],
       },
     },
@@ -31,7 +31,18 @@ app.use(
   })
 );
 
-app.use(cors({ origin: env.clientUrl || '*', credentials: true }));
+const allowedOrigins = new Set(env.corsOrigins);
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  })
+);
 app.use(cookieParser(env.sessionSecret));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -50,6 +61,7 @@ const csrfProtection = csrf({
     sameSite: 'lax',
     secure: env.nodeEnv === 'production',
     signed: true,
+    domain: env.cookieDomain,
   },
   headerName: env.csrfHeaderName,
 });
@@ -61,6 +73,7 @@ app.use((req, res, next) => {
     httpOnly: false,
     sameSite: 'lax',
     secure: env.nodeEnv === 'production',
+    domain: env.cookieDomain,
   });
   res.setHeader(env.csrfHeaderName, token);
   next();

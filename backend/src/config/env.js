@@ -1,17 +1,28 @@
+const fs = require('fs');
 const path = require('path');
 const dotenvSafe = require('dotenv-safe');
 
+const envPath = path.join(__dirname, '../../.env');
+const examplePath = path.join(__dirname, '../../.env.example');
+
 dotenvSafe.config({
   allowEmptyValues: false,
-  example: path.join(process.cwd(), '.env.example'),
+  path: fs.existsSync(envPath) ? envPath : undefined,
+  example: examplePath,
 });
+
+const corsOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
-  port: Number(process.env.PORT) || 4000,
+  port: Number(process.env.PORT) || 5001,
   databaseUrl: process.env.DATABASE_URL || '',
   redisUrl: process.env.REDIS_URL || '',
-  clientUrl: process.env.CLIENT_URL || '*',
+  clientUrl: corsOrigins[0],
+  corsOrigins,
   sessionSecret: process.env.SESSION_SECRET || 'change-me',
   jwtSecret: process.env.JWT_SECRET || 'change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1h',
@@ -36,6 +47,7 @@ const env = {
   logDir: process.env.LOG_DIR || path.join(process.cwd(), 'logs'),
   csrfCookieName: process.env.CSRF_COOKIE_NAME || 'XSRF-TOKEN',
   csrfHeaderName: process.env.CSRF_HEADER_NAME || 'X-CSRF-Token',
+  cookieDomain: process.env.COOKIE_DOMAIN || undefined,
 };
 
 module.exports = env;

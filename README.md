@@ -45,6 +45,34 @@
 
 > يتم تحميل متغيرات البيئة عبر `dotenv-safe`، لذا يجب ضبط كل القيم المطلوبة أو إبقاء القيم الافتراضية في `.env.example` قبل تشغيل الخوادم.
 
+## النشر على الإنتاج (bot2.lork.cloud)
+1. **ضبط DNS**: وجّه `bot2.lork.cloud` إلى عنوان الـ VPS العام.
+2. **إعداد المتغيرات البيئية (الخادم)**:
+   - انسخ القالب: `cp .env.example backend/.env` ثم حدّث القيم المهمة:
+     - `PORT=5001`
+     - `FRONTEND_URL=https://bot2.lork.cloud`
+     - `CORS_ORIGINS=https://bot2.lork.cloud`
+     - `COOKIE_DOMAIN=.lork.cloud`
+     - بيانات القاعدة/Redis ومفاتيح المزودين (استخدم قيمًا حقيقية، وتجنّب مشاركتها في Git).
+3. **Nginx**:
+   - انسخ القالب إلى السيرفر: `/etc/nginx/sites-available/bot2.lork.cloud.conf` من `deploy/nginx/bot2.lork.cloud.conf`.
+   - فعّل الموقع: `sudo ln -sf /etc/nginx/sites-available/bot2.lork.cloud.conf /etc/nginx/sites-enabled/`
+   - اختبار الصياغة: `sudo nginx -t` ثم `sudo systemctl reload nginx`.
+4. **الشهادة (HTTPS)**:
+   - استخرج شهادة: `sudo certbot --nginx -d bot2.lork.cloud` (أعدها عند التجديد التلقائي أو تغيّر الدومين).
+5. **تشغيل الـ Backend عبر PM2**:
+   - من جذر المشروع على الخادم: `chmod +x deploy/restart-backend.sh && ./deploy/restart-backend.sh`
+   - اسم العملية: `whatsapp-ai-bot-new` (المعرّف داخل `ecosystem.config.js`).
+6. **الصحة والتشخيص**:
+   - تحقّق من الصحة محليًا: `curl http://127.0.0.1:5001/api/health`
+   - عبر الدومين بعد الشهادة: `curl https://bot2.lork.cloud/api/health`
+   - سجلات PM2: `pm2 logs whatsapp-ai-bot-new`
+   - سجلات Nginx: `/var/log/nginx/access.log` و`/var/log/nginx/error.log`.
+7. **الحد من المشكلات الشائعة**:
+   - تأكد أن `proxy_pass` في `/api` لا يحتوي على شرطة مائلة إضافية (القالب مهيأ بالفعل).
+   - CORS/CSRF: يجب أن يطابق `FRONTEND_URL` و`CORS_ORIGINS` الدومين الفعلي مع `credentials=true`، ولا يُسمح بـ `*`.
+   - ملفات تعريف الارتباط: في الإنتاج تستخدم `Secure` و`SameSite=lax` مع `COOKIE_DOMAIN=.lork.cloud` لضمان مشاركة الرمز عبر الواجهة و API على نفس الدومين.
+
 ## هيكل المجلدات
 ```
 .
