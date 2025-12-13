@@ -1,5 +1,13 @@
 # ERP WhatsApp Automation
 
+## 🚨 ملاحظات مهمة قبل النشر
+
+1. **PostgreSQL Authentication:** يجب تغيير `peer` إلى `md5` في `pg_hba.conf` - راجع [DEPLOYMENT.md](./DEPLOYMENT.md)
+2. **CSRF Cookies:** تم تعطيل `signed` و `secure` للعمل مع HTTP و IP addresses
+3. **AuthContext:** الملف بامتداد `.jsx` وليس `.js`
+
+للتفاصيل الكاملة، راجع [DEPLOYMENT.md](./DEPLOYMENT.md)
+
 مشروع متكامل (Backend + Frontend) لنظام رد آلي ذكي على WhatsApp باستخدام Node.js و React.
 
 ## المميزات

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import QRCodeDisplay from '../components/QRCodeDisplay';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.jsx';
 import api from '../services/api.service';
 import getSocket from '../services/socket.service';
 import { friendlyError } from '../utils/error';

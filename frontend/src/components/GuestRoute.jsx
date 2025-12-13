@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.jsx';
 
 function GuestRoute({ children }) {
   const { isAuthenticated } = useAuth();

@@ -3,7 +3,7 @@ import ConversationList from '../components/ConversationList';
 import ChatWindow from '../components/ChatWindow';
 import api from '../services/api.service';
 import { getSocket } from '../services/socket.service';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.jsx';
 import { parseApiError } from '../utils/error';
 
 function ConversationsPage() {

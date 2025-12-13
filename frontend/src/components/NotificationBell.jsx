@@ -4,7 +4,7 @@ import { fetchNotifications, markAllNotificationsRead, markNotificationRead } fr
 import { getSocket } from '../services/socket.service';
 import { parseApiError } from '../utils/error';
 import { formatDateTime } from '../utils/date';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const TYPE_STYLES = {
   info: 'bg-blue-50 text-blue-700 border-blue-100',

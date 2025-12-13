@@ -59,17 +59,15 @@ if (env.nodeEnv !== 'test') {
 
 app.use('/api', apiLimiter);
 
-const csrfCookieOptions = {
-  key: env.csrfCookieName,
-  httpOnly: false,
-  sameSite: 'lax',
-  secure: env.nodeEnv === 'production',
-  signed: true,
-  ...(env.cookieDomain ? { domain: env.cookieDomain } : {}),
-};
-
 const csrfProtection = csrf({
-  cookie: csrfCookieOptions,
+  cookie: {
+    key: env.csrfCookieName,
+    httpOnly: false,
+    sameSite: 'lax',
+    secure: false,
+    signed: false,
+    ...(env.cookieDomain && { domain: env.cookieDomain }),
+  },
   headerName: env.csrfHeaderName,
 });
 
@@ -86,14 +84,30 @@ app.use((req, res, next) => {
     return next();
   }
   const token = req.csrfToken();
-  res.cookie(env.csrfCookieName, token, csrfCookieOptions);
+  const cookieOptions = {
+    httpOnly: false,
+    sameSite: 'lax',
+    secure: false,
+  };
+  if (env.cookieDomain) {
+    cookieOptions.domain = env.cookieDomain;
+  }
+  res.cookie(env.csrfCookieName, token, cookieOptions);
   res.setHeader(env.csrfHeaderName, token);
   next();
 });
 
 app.get('/api/csrf-token', (req, res) => {
   const token = req.csrfToken();
-  res.cookie(env.csrfCookieName, token, csrfCookieOptions);
+  const cookieOptions = {
+    httpOnly: false,
+    sameSite: 'lax',
+    secure: false,
+  };
+  if (env.cookieDomain) {
+    cookieOptions.domain = env.cookieDomain;
+  }
+  res.cookie(env.csrfCookieName, token, cookieOptions);
   res.json({ csrfToken: token });
 });
 
