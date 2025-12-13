@@ -4,7 +4,6 @@ const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
-const csrf = require('csurf');
 const routes = require('./routes');
 const env = require('./config/env');
 const { apiLimiter } = require('./middleware/rateLimit.middleware');
@@ -59,58 +58,6 @@ if (env.nodeEnv !== 'test') {
 
 app.use('/api', apiLimiter);
 
-const csrfProtection = csrf({
-  cookie: {
-    key: env.csrfCookieName,
-    httpOnly: false,
-    sameSite: 'lax',
-    secure: false,
-    signed: false,
-    ...(env.cookieDomain && { domain: env.cookieDomain }),
-  },
-  headerName: env.csrfHeaderName,
-});
-
-// Health endpoint must always work; skip CSRF validation there
-app.use((req, res, next) => {
-  if (req.path === '/api/health') {
-    return next();
-  }
-  return csrfProtection(req, res, next);
-});
-
-app.use((req, res, next) => {
-  if (req.path === '/api/health') {
-    return next();
-  }
-  const token = req.csrfToken();
-  const cookieOptions = {
-    httpOnly: false,
-    sameSite: 'lax',
-    secure: false,
-  };
-  if (env.cookieDomain) {
-    cookieOptions.domain = env.cookieDomain;
-  }
-  res.cookie(env.csrfCookieName, token, cookieOptions);
-  res.setHeader(env.csrfHeaderName, token);
-  next();
-});
-
-app.get('/api/csrf-token', (req, res) => {
-  const token = req.csrfToken();
-  const cookieOptions = {
-    httpOnly: false,
-    sameSite: 'lax',
-    secure: false,
-  };
-  if (env.cookieDomain) {
-    cookieOptions.domain = env.cookieDomain;
-  }
-  res.cookie(env.csrfCookieName, token, cookieOptions);
-  res.json({ csrfToken: token });
-});
-
 app.use('/api', routes);
 
 app.use((req, res) => {
@@ -118,10 +65,6 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  if (err.code === 'EBADCSRFTOKEN') {
-    logger.warn('CSRF token validation failed', { path: req.path, ip: req.ip });
-    return res.status(403).json({ message: 'Invalid CSRF token' });
-  }
   logger.error('Unhandled error', err);
   res.status(500).json({ message: 'Internal server error' });
 });
